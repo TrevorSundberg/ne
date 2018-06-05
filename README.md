@@ -11,7 +11,7 @@
 
 ## Your First Application
 
-The `.ne` executable is a `.zip` archive that contains `.ll` LLVM text files, an optional `manifest.xml` file, and any other files you wish to package with your executable.
+The `.ne` executable is a `.zip` archive that contains `.ll` LLVM text files, an optional `manifest.yaml` file, and any other files you wish to package with your executable.
 
 For example, copy this code into a new a `main.ll` file:
 ```llvm
@@ -35,7 +35,7 @@ int main(void)
 }
 ```
 
-Zip up the `main.ll` into `main.zip`, then rename `main.zip` file to `main.ne`. Congratulations! You have created your first ne-executable. The call to `ne_sandbox_hello_world` will print or show a *hello world* message. This function exists for newcomers and testing purposes. Note that our `.ne` executable could also be used as a library if we were to use `external` linkage for our own functions. An `.ne` file can include other `.ne` files, but note that this is considered static linking, and we prefer users to dynamically link libraries using the package manager and `manifest.xml` files instead which is more compatible with licenses such as the LGPL.
+Zip up the `main.ll` into `main.zip`, then rename `main.zip` file to `main.ne`. Congratulations! You have created your first ne-executable. The call to `ne_sandbox_hello_world` will print or show a *hello world* message. This function exists for newcomers and testing purposes. Note that our `.ne` executable could also be used as a library if we were to use `external` linkage for our own functions. An `.ne` file can include other `.ne` files, but note that this is considered static linking, and we prefer users to dynamically link libraries using the package manager and `manifest.yaml` files instead which is more compatible with licenses such as the LGPL.
 
 When `main.ne` is run, the contained LLVM text files are automatically compiled into native assembly and linked against that platform's ne-API. Any function with C-linkage that starts with `ne_` may be *optionally linked* against. If a platform does not support a given `ne_` API call, then an empty function will be generated that returns the equivalent of 0, null, false, etc. This allows platforms to implement parts of the ne-API, and even extend the API without worrying about linkage problems (much like OpenGL's extensions). This is why the ne-API uses `supported` calls, such as `ne_bool ne_socket_supported(void)`. Even if `ne_socket_supported` is not implemented, it will return false due to *optional linkage*. This can be used for hosts to offer extended functionality, for example if an application runs under [Steam](https://store.steampowered.com/) it could expose the Steam API by introducing an `ne_steam_supported` function and corresponding `ne_steam_...` calls.
 
@@ -72,35 +72,50 @@ a:0:64 - aggregates are 64-bit aligned
 
 A proper `.ne` package uses the [SemVer](http://semver.org/) schema for versioning. For example, if we were to distribute our `main.ne` as a package, we should rename it to `main_1.0.0.ne`. Note that the underscore before the version is required. A proper named library or executable follows the semantic `name_major.minor.patch.ne`. Obviously the name `main` is not a great library name, so pick something unique!
 
-## Manifest XML File
+## Manifest YAML File
 
-The `manifest.xml` file describes package dependencies, required permissions for your application to run, and ways that the operating system may interact with your application (for example if your application handles any file extensions).
+The `manifest.yaml` file describes package dependencies, required permissions for your application to run, and ways that the operating system may interact with your application (for example if your application handles any file extensions).
 
-A proper manifest file takes the form:
-```xml
-<manifest>
-  <!-- Your settings go here -->
-</manifest>
+An example manifest file:
+```yaml
+- dependency:
+    name: libc
+    major: 1
+
+- dependency:
+    name: curl
+    major: 7
+    minor: 60
+    patch: 0
+
+- required_permission: filesystem
+- required_permission: socket
 ```
 
 #### Package Dependency
 
-```xml
-<dependency name="ne_libc" major="1" minor="0" patch="0" />
+```yaml
+- dependency:
+    name: lua
+    major: 5
+    minor: 3
+    patch: 4
 ```
-The `minor` and `patch` are optional. If they are left out, the latest version will be retrieved. A dependency will be downloaded by the sandbox before your application is run, and in the event that a package cannot be retrieved the sandbox will emit an error.
+The `minor` and `patch` are optional. If the patch is left out, the latest patch will be retrieved, and same for the minor. The major is required because it represents breaking API changes. A dependency will be downloaded by the sandbox before your application is run, and in the event that a package cannot be retrieved the sandbox will emit an error.
 
 #### Required Permission
 
-```xml
-<required-permission name="socket" />
+```yaml
+- required_permission: socket
 ```
 This is the equivalent of calling `ne_socket_request_permission` at runtime, except that the sandbox can prompt the user before your application runs. Note that if you were to then call `ne_socket_request_permission` it would be guaranteed to return `ne_true`.
 
 #### Platform Pragma
 
-```xml
-<pragma name="..." attribute="..." />
+```yaml
+-pragma:
+    name: anything
+    other-data: 1234
 ```
 
 A pragma is platform dependent and is used to communicate information to a particular platform. The values have no meaning otherwise. The use of pragmas is discouraged as we hope that `.ne` files can remain agnostic of platform, however we understand the need for these pragmas on occasion.
@@ -124,9 +139,9 @@ Unfortunately not all C libraries work this way. For example [FreeType](https://
 
 **We encourage those uploading packages to revise the includes to be relative and as flat as possible.**
 
-When you compile your application, it will output to a `.ll` file and no linking phase will occur so you never need to worry about `.lib` or `.o` files. Simply place a [dependency](#package-dependency) element in the `manifest.xml` file, for example:
+When you compile your application, it will output to a `.ll` file and no linking phase will occur so you never need to worry about `.lib` or `.o` files. Simply place a [dependency](#package-dependency) element in the `manifest.yaml` file, for example:
 
-```xml
+```yaml
 <dependency name="ne_lua" major="5" minor="3" patch="4" />
 ```
 
