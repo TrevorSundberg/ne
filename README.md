@@ -224,5 +224,5 @@ This project is built on the shoulders of giants. We are forever thankful to the
 * [WebAssembly](https://webassembly.org/)
 * [POSIX](https://en.wikipedia.org/wiki/POSIX)
 * [LLVM](https://llvm.org/)
-* [Vulcan](https://www.khronos.org/vulkan/)
+* [Vulkan](https://www.khronos.org/vulkan/)
 * [npm](https://www.npmjs.com/)
