@@ -2,7 +2,7 @@
 
 **ne** is a standard specification, rather than a specific implementation. The standard includes:
 
-1. Concise cross platform API for modern operating systems. Includes [Vulcan](https://www.khronos.org/vulkan/) for graphics.
+1. Concise cross platform API for modern operating systems. Includes [Vulkan](https://www.khronos.org/vulkan/) for graphics.
 2. Portable executable `.ne` that can be interpreted on every operating system.
 3. Permission based secure sandbox based on native client research.
 4. Package management for sharing libraries.
