@@ -137,7 +137,9 @@ The goal is to compile once, and run on every platform!
 The ne-API can also be used independently from the sandbox/portable executable in the same way you would use frameworks like SDL. To use **ne** as a library, download the repository and build with [CMake](https://cmake.org/cmake-tutorial/) using the command line:
 
 ```
-cmake CMakeLists.txt
+mkdir build
+cd build
+cmake ..
 ```
 A `.lib` or `.o` will be output for the platform you are targeting in the `lib` folder. Link that directly into your application set your includes to point at the `include` folder. Note that because **ne** is a standard specification there may be multiple implementations you can use by different vendors, which may or may not support the library form as mentioned here. The example implementations we provide here will always allow this usage.
 
