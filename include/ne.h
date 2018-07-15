@@ -100,22 +100,35 @@ typedef struct ne_image ne_image;
 
 /// Errors:
 
-typedef const uint64_t ne_result;
+typedef uint64_t ne_result;
 
 // Enumeration of status codes.
 // Each sub-api may define their own values and may use any value within 0 to 2^63.
 // Results between sub-apis may overlap, so only use the correspond sub-api results, or the following:
+
+// The operation was a success.
 static const ne_result ne_result_core_success = (ne_result)-1;
+
+// A parameter that was passed in was not valid for the function.
 static const ne_result ne_result_core_invalid_parameter = (ne_result)-2;
+
+// An attempt to call a function was denied because the application never requested
+// permission for the sub-api, or permission was requested but denied.
 static const ne_result ne_result_core_permission_denied = (ne_result)-3;
+
+// The sub-api was not implemented and so the function cannot be called.
 static const ne_result ne_result_core_not_supported = (ne_result)-4;
+
+// Only used for unit testing to set the result before calling a function.
+// Using this value allows us to validate that the result was properly set.
+static const ne_result ne_result_core_not_set = (ne_result)-5;
 
 /// Version:
 
+ne_bool NE_API ne_version_supported(ne_result* result);
+
 static const uint64_t ne_version_header_major = 1;
 static const uint64_t ne_version_header_minor = 0;
-
-ne_bool NE_API ne_version_supported(ne_result* result);
 
 // Get the major version of the API. Between major versions breaking changes are applied.
 uint64_t NE_API ne_version_api_major(ne_result* result);
@@ -145,6 +158,9 @@ uint64_t NE_API ne_version_sandbox_patch(ne_result* result);
 const char* NE_API ne_version_platform(ne_result* result);
 
 /// Memory:
+
+ne_bool NE_API ne_memory_supported(ne_result* result);
+
 static const ne_result ne_result_memory_allocation_failed = 0;
 
 //    ne_result_memory_allocation_failed:
@@ -157,6 +173,8 @@ void NE_API ne_memory_free(ne_result* result, void* memory);
 
 /// Sandbox:
 
+ne_bool NE_API ne_sandbox_supported(ne_result* result);
+
 // Comunicate a custom message with the sandbox.
 // This function is entirely sandbox defined and has no explicit behavior.
 // The return value is also sandbox defined.
@@ -168,12 +186,17 @@ void NE_API ne_sandbox_message(ne_result* result, const char* message);
 // Signal an error to the sandbox application.
 void NE_API ne_sandbox_error(ne_result* result, const char* message);
 
+// Terminates the application at the current location. The code and the message are optional.
+void NE_API ne_sandbox_terminate(ne_result* result, uint64_t code, const char* message);
+
 // This is the first function that should be called to test if functionality is working.
 // The sandbox will display a Hello World message in a console or as a message box.
 // This is also used as an introductory function to demonstrate that an application is working.
 void NE_API ne_sandbox_hello_world(ne_result* result);
 
 /// Timers:
+
+ne_bool NE_API ne_timer_supported(ne_result* result);
 
 // A platform may support multiple types of timers, ordered from highest to lowest frequency.
 // The minimum frequency is a timer that increments every second.
@@ -191,23 +214,28 @@ uint64_t NE_API ne_timer_frequency(ne_result* result, uint64_t timer);
 
 
 /// File IO:
+
+ne_bool NE_API ne_file_supported(ne_result* result);
+
 static const ne_result ne_result_file_error = 0;
 
 typedef struct ne_file ne_file;
 
+// Reads the entire size specified unless the end of the stream occurs or an error occurs.
+// Note that when it reaches the end of the stream it will still return ne_result_core_success.
 // This operation is non-blocking and will return how much was read.
 //    ne_result_core_invalid_parameter:
 //      If the file was a write only file or invalid file pointer.
 //    ne_result_file_error:
 //      If an error occurred on reading the file.
-uint64_t NE_API ne_file_read(ne_result* result, ne_file* file, void* buffer, uint64_t size);
+uint64_t NE_API ne_file_read(ne_result* result, ne_file* file, void* buffer, uint64_t size, ne_bool blocking);
 
 // This operation is non-blocking and will return how much was written.
 //    ne_result_core_invalid_parameter:
 //      If the file was a read only file or invalid file pointer.
 //    ne_result_file_error:
 //      If an error occurred on writing the file.
-uint64_t NE_API ne_file_write(ne_result* result, ne_file* file, const void* buffer, uint64_t size);
+uint64_t NE_API ne_file_write(ne_result* result, ne_file* file, const void* buffer, uint64_t size, ne_bool blocking);
 
 //    ne_result_core_invalid_parameter:
 //      If the file was a read only file or invalid file pointer.
@@ -217,6 +245,8 @@ void NE_API ne_file_flush(ne_result* result, ne_file* file);
 
 
 uint64_t NE_API ne_file_get_position(ne_result* result, ne_file* file);
+
+uint64_t NE_API ne_file_get_length(ne_result* result, ne_file* file);
 
 
 typedef uint64_t ne_file_seek_origin;
@@ -230,6 +260,8 @@ void NE_API ne_file_seek(ne_result* result, ne_file* file, ne_file_seek_origin o
 void NE_API ne_file_free(ne_result* result, ne_file* file);
 
 /// Input / Output:
+
+ne_bool NE_API ne_io_supported(ne_result* result);
 
 ne_file* NE_API ne_io_get_input(ne_result* result);
 ne_file* NE_API ne_io_get_output(ne_result* result);
@@ -293,9 +325,10 @@ typedef struct ne_filesystem_dialog_config ne_filesystem_dialog_config;
 const char* NE_API ne_filesystem_dialog(ne_result* result, const ne_filesystem_dialog_config* config);
 
 /// Thread:
-static const ne_result ne_result_mutex_locked = 0;
 
 ne_bool NE_API ne_thread_supported(ne_result* result);
+
+static const ne_result ne_result_mutex_locked = 0;
 
 typedef struct ne_thread ne_thread;
 
@@ -412,6 +445,8 @@ void NE_API ne_thread_event_free(ne_result* result, ne_thread_event* event);
 
 /// Packages:
 
+ne_bool NE_API ne_package_supported(ne_result* result);
+
 struct ne_package_info
 {
   const char* name;
@@ -456,11 +491,12 @@ void NE_API ne_package_close(ne_result* result, ne_package* package);
 
 
 /// Clipboard:
-static const ne_result ne_result_clipboard_texttype_not_supported = 0;
 
 ne_bool NE_API ne_clipboard_supported(ne_result* result);
 
 ne_bool NE_API ne_clipboard_request_permission(ne_result* result);
+
+static const ne_result ne_result_clipboard_texttype_not_supported = 0;
 
 // Common text types that should be handled by this every platform.
 // If a particular text type is not supported it should return null.
@@ -533,14 +569,14 @@ ne_int64_2 NE_API ne_mouse_get_position_screen(ne_result* result);
 
 /// Touch:
 
+ne_bool NE_API ne_touch_supported(ne_result* result);
+
 struct ne_touch_finger
 {
   ne_int64_2 position_screen;
   uint64_t pressure;
 };
 typedef struct ne_touch_finger ne_touch_finger;
-
-ne_bool NE_API ne_touch_supported(ne_result* result);
 
 ne_bool NE_API ne_touch_is_mouse_emulated(ne_result* result);
 
@@ -562,12 +598,16 @@ void NE_API ne_touch_get_finger(ne_result* result, uint64_t device, uint64_t fin
 
 /// CPU Features / Byte Order:
 
+ne_bool NE_API ne_cpu_supported(ne_result* result);
+
 ne_bool NE_API ne_cpu_is_little_endian(ne_result* result);
 uint64_t NE_API ne_cpu_get_cache_line_size(ne_result* result);
 uint64_t NE_API ne_cpu_get_logical_count(ne_result* result);
 uint64_t NE_API ne_cpu_get_memory_size(ne_result* result);
 
 /// Power Management:
+
+ne_bool NE_API ne_power_supported(ne_result* result);
 
 typedef uint64_t ne_power_state;
 static const ne_power_state ne_power_state_powered = 0;
@@ -587,6 +627,8 @@ ne_bool NE_API ne_socket_supported(ne_result* result);
 ne_bool NE_API ne_socket_request_permission(ne_result* result);
 
 /// Debug:
+
+ne_bool NE_API ne_debug_supported(ne_result* result);
 
 // Attempt to trigger breakpoint with the sandbox application.
 // The purpose of this to allow code to be debugged at a certain point.
