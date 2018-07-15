@@ -142,7 +142,11 @@ Unfortunately not all C libraries work this way. For example [FreeType](https://
 When you compile your application, it will output to a `.ll` file and no linking phase will occur so you never need to worry about `.lib` or `.o` files. Simply place a [dependency](#package-dependency) element in the `manifest.yaml` file, for example:
 
 ```yaml
-<dependency name="ne_lua" major="5" minor="3" patch="4" />
+- dependency:
+    name: lua
+    major: 5
+    minor: 3
+    patch: 4
 ```
 
 The goal is to compile once, and run on every platform!
