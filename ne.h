@@ -24,7 +24,7 @@ extern "C" {
 // If a 'request_permission' function exists then it must be called and must return
 // ne_true, otherwise all calls are *invalid* and return 'ne_result_permission_denied'.
 
-// An 'supported' call will indicate that a particular sub-api
+// A 'supported' call will indicate that a particular sub-api
 // may not exist on some platforms, e.g. 'ne_thread_exists'.
 // If a sub-api does not exist, all calls to it are *invalid* and return 'ne_result_not_supported'.
 // This also includes a 'request_permission' function if applicable.
@@ -575,9 +575,9 @@ void ne_sandbox_message(ne_result* result, const char* message);
 // This is also used as an introductory function to demonstrate that an application is working.
 void ne_sandbox_hello_world();
 
-/// Vulcan:
+/// Vulkan:
 
-ne_bool ne_vulcan_supported(ne_result* result);
+ne_bool ne_vulkan_supported(ne_result* result);
 
 /// LLVM:
 
