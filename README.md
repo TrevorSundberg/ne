@@ -83,13 +83,7 @@ An example manifest file:
     major: 1
     minor: 0
 
-- dependency:
-    name: ne_socket
-    major: 1
-    minor: 0
-    require-permission: false
-
-# libc automatically pulls in dependencies on ne_memory, ne_filesystem, etc.
+# libc automatically pulls in dependencies on ne_core, ne_memory, ne_filesystem, etc.
 - dependency:
     name: libc
     major: 1
