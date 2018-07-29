@@ -1,0 +1,141 @@
+- dependency:
+    name: ne_core
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_clipboard
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_cpu
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_debug
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_file
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_filesystem
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_io
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_keyboard
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_memory
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_mouse
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_package
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_power
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_sandbox
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_socket
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_thread
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_timer
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_touch
+    major: 0
+    minor: 0
+
+- dependency:
+    name: ne_vulkan
+    major: 0
+    minor: 0
+
+
+# These are APIs that are planned:
+#- dependency:
+#    name: ne_atomic
+#    major: 0
+#    minor: 0
+#
+#- dependency:
+#    name: ne_audio
+#    major: 0
+#    minor: 0
+#
+#- dependency:
+#    name: ne_event
+#    major: 0
+#    minor: 0
+#
+#- dependency:
+#    name: ne_gamepad
+#    major: 0
+#    minor: 0
+#
+#- dependency:
+#    name: ne_haptic
+#    major: 0
+#    minor: 0
+#
+#- dependency:
+#    name: ne_intrinsic
+#    major: 0
+#    minor: 0
+#
+#- dependency:
+#    name: ne_joystick
+#    major: 0
+#    minor: 0
+#
+#- dependency:
+#    name: ne_port
+#    major: 0
+#    minor: 0
+#
+#- dependency:
+#    name: ne_print
+#    major: 0
+#    minor: 0
+#
+#- dependency:
+#    name: ne_window
+#    major: 0
+#    minor: 0

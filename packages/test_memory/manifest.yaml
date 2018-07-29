@@ -1,0 +1,4 @@
+- dependency:
+    name: test_core
+    major: 0
+    minor: 0

@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.1)
+project(ne)
+
+#add_executable(ne main.c...)
+#target_include_directories(ne directory...)
+#target_link_libraries(ne directory...)
