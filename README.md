@@ -45,7 +45,7 @@ To build a more complex application or library for **ne** with your favorite nat
 
 Compilers should target 64 bit pointers with little endian format.
 
-To support the idea that we compile once only and run on every platform, it means that compile time operations such as the `sizeof` operator in C will only be evaluated once for all platforms. Because of this, it means that there are requirements on alignment rules, pointer sizes, padding, endianness, etc. All compilations should result in the same `sizeof` for structures and primitives.
+To support the idea that we compile once only and run on every platform, it means that compile time operations such as the `sizeof` operator in C will only be evaluated once for all platforms. Because of this, it means that there are requirements on alignment, pointer sizes, padding, endianness, etc. All compilations should result in the same `sizeof` for structures and primitives.
 
 The following LLVM data layout is what all sandboxes use:
 
@@ -79,6 +79,18 @@ The `manifest.yaml` file describes package dependencies, required permissions fo
 An example manifest file:
 ```yaml
 - dependency:
+    name: ne_core
+    major: 1
+    minor: 0
+
+- dependency:
+    name: ne_socket
+    major: 1
+    minor: 0
+    require-permission: false
+
+# libc automatically pulls in dependencies on ne_memory, ne_filesystem, etc.
+- dependency:
     name: libc
     major: 1
 
@@ -87,30 +99,26 @@ An example manifest file:
     major: 7
     minor: 60
     patch: 0
-
-- required_permission: filesystem
-- required_permission: socket
 ```
 
 #### Package Dependency
 
 ```yaml
 - dependency:
-    name: lua
-    major: 5
-    minor: 3
-    patch: 4
+    name: ne_socket
+    major: 1
+    minor: 1
+    patch: 2
+    require: request_permission
 ```
 The `minor` and `patch` are optional. If the patch is left out, the latest patch will be retrieved, and same for the minor. The major is required because it represents breaking API changes. A dependency will be downloaded by the sandbox before your application is run, and in the event that a package cannot be retrieved the sandbox will emit an error.
 
-#### Required Permission
+The `require` field is optional and defaults to `request_permission`. Valid values are:
+ - `request_permission` - The sandbox must support and grant permission to use prior to your program's execution. Calls to `ne_socket_supported` and `ne_socket_request_permission` will return true.
+ - `supported` - The sandbox must support the library, but you do not have implicit permission to use it. Calls to `ne_socket_supported` will return true.
+ - `none` - The sandbox may not support the library and you do not have implicit permission to use it. Calls to `ne_socket_supported` may return false. This is useful when a program can run with or without `ne_socket`, but still wants to download the package and compile against the headers.
 
-```yaml
-- required_permission: socket
-```
-This is the equivalent of calling `ne_socket_request_permission` at runtime, except that the sandbox can prompt the user before your application runs. Note that if you were to then call `ne_socket_request_permission` it would be guaranteed to return `ne_true`.
-
-#### Platform Pragma
+#### Sandbox Pragma
 
 ```yaml
 -pragma:
@@ -118,7 +126,7 @@ This is the equivalent of calling `ne_socket_request_permission` at runtime, exc
     other-data: 1234
 ```
 
-A pragma is platform dependent and is used to communicate information to a particular platform. The values have no meaning otherwise. The use of pragmas is discouraged as we hope that `.ne` files can remain agnostic of platform, however we understand the need for these pragmas on occasion.
+A pragma is sandbox dependent and is used to communicate information to a particular sandbox. The values have no meaning otherwise. The use of pragmas is discouraged as we hope that `.ne` files can remain agnostic of sandbox, however we understand the need for these pragmas on occasion.
 
 ## Packages
 
