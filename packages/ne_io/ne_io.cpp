@@ -73,7 +73,8 @@ static uint64_t _input_read(uint64_t *result, ne_core_stream *stream,
 
       DWORD events_read = 0;
       if (!ReadConsoleInputW(handle, &record, 1, &events_read)) {
-        NE_CORE_ERROR("If we peeked the input, we should have been able to read it");
+        NE_CORE_ERROR(
+            "If we peeked the input, we should have been able to read it");
         NE_CORE_RESULT(ne_core_result_error);
         return 0;
       }

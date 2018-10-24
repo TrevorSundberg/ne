@@ -5,12 +5,12 @@ project(ne)
 # name where all symbols are replaced with underscores.
 # "GNU/kFreeBSD" -> "GNU_KFREEBSD", "Windows" -> "WINDOWS", "Emscripten" -> "EMSCRIPTEN"...
 # See https://github.com/Kitware/CMake/blob/master/Modules/CMakeDetermineSystem.cmake
-string(REGEX REPLACE "[^0-9a-zA-Z]" "_" NE_PLATFORM ${CMAKE_SYSTEM_NAME})
-string(TOUPPER ${NE_PLATFORM} NE_PLATFORM)
-string(CONCAT NE_PLATFORM_NAME "\\" "\"" ${NE_PLATFORM} "\\" "\"")
+string(REGEX REPLACE "[^0-9a-zA-Z]" "_" NE_CORE_PLATFORM ${CMAKE_SYSTEM_NAME})
+string(TOUPPER ${NE_CORE_PLATFORM} NE_CORE_PLATFORM)
+string(CONCAT NE_CORE_PLATFORM_NAME "\\" "\"" ${NE_CORE_PLATFORM} "\\" "\"")
 
-add_definitions(-D NE_PLATFORM_NAME=${NE_PLATFORM_NAME})
-add_definitions(-D NE_PLATFORM_${NE_PLATFORM}=1)
+add_definitions(-D NE_CORE_PLATFORM_NAME=${NE_CORE_PLATFORM_NAME})
+add_definitions(-D NE_CORE_PLATFORM_${NE_CORE_PLATFORM}=1)
 
 # In the future we'll move this to be individual CMake files for each
 # package (test will bring them all together) and then this CMake file
