@@ -51,7 +51,7 @@ void (*ne_core_error)(uint64_t *result, const char *message) = &_ne_core_error;
 static uint8_t *_ne_core_allocate(uint64_t *result, uint64_t sizeBytes) {
   uint8_t *memory = (uint8_t *)malloc((size_t)sizeBytes);
   NE_CORE_RESULT(memory ? ne_core_result_success
-                       : ne_core_result_allocation_failed);
+                        : ne_core_result_allocation_failed);
   return memory;
 }
 uint8_t *(*ne_core_allocate)(uint64_t *result,

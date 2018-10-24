@@ -64,6 +64,22 @@ static const ne_core_primitive_type ne_core_primitive_type_float = 8;
 static const ne_core_primitive_type ne_core_primitive_type_double = 9;
 static const ne_core_primitive_type ne_core_primitive_type_pointer = 10;
 
+#define NE_CORE_ENCLOSURE(code)                                                \
+  do {                                                                         \
+    code                                                                       \
+  } while (NE_CORE_FALSE)
+
+#if !defined(NDEBUG)
+#define NE_CORE_ASSERT(condition, text)                                        \
+  NE_CORE_ENCLOSURE(if (!(condition)) ne_core_error(0, (text));)
+#else
+#define NE_CORE_ASSERT(condition, text)
+#endif
+#define NE_CORE_ERROR_IF(condition, text) NE_CORE_ASSERT(!(condition), text)
+#define NE_CORE_ERROR(text) NE_CORE_ASSERT(0, text)
+
+#define NE_CORE_RESULT(code) NE_CORE_ENCLOSURE(if (result) *result = code;)
+
 #define NE_CORE_DECLARE_PACKAGE(name, major, minor)                            \
   NE_CORE_API ne_core_bool (*name##_supported)(uint64_t * result);             \
   NE_CORE_API ne_core_bool (*name##_request_permission)(uint64_t * result);    \
@@ -74,13 +90,11 @@ static const ne_core_primitive_type ne_core_primitive_type_pointer = 10;
 
 #define NE_CORE_DEFINE_PACKAGE_VERSION(name)                                   \
   static uint64_t _##name##_version_linked_major(uint64_t *result) {           \
-    if (result)                                                                \
-      *result = ne_core_result_success;                                        \
+    NE_CORE_RESULT(ne_core_result_success);                                    \
     return name##_version_header_major;                                        \
   }                                                                            \
   static uint64_t _##name##_version_linked_minor(uint64_t *result) {           \
-    if (result)                                                                \
-      *result = ne_core_result_success;                                        \
+    NE_CORE_RESULT(ne_core_result_success);                                    \
     return name##_version_header_minor;                                        \
   }                                                                            \
   uint64_t (*name##_version_linked_major)(uint64_t * result) =                 \
@@ -102,35 +116,17 @@ static const ne_core_primitive_type ne_core_primitive_type_pointer = 10;
 #define NE_CORE_DEFINE_PACKAGE(name)                                           \
   NE_CORE_DEFINE_PACKAGE_VERSION(name);                                        \
   static ne_core_bool _##name##_supported(uint64_t *result) {                  \
-    if (result)                                                                \
-      *result = ne_core_result_success;                                        \
+    NE_CORE_RESULT(ne_core_result_success);                                    \
     return NE_CORE_TRUE;                                                       \
   }                                                                            \
   static ne_core_bool _##name##_request_permission(uint64_t *result) {         \
-    if (result)                                                                \
-      *result = ne_core_result_success;                                        \
+    NE_CORE_RESULT(ne_core_result_success);                                    \
     return NE_CORE_TRUE;                                                       \
   }                                                                            \
   ne_core_bool (*name##_supported)(uint64_t * result) = &_##name##_supported;  \
   ne_core_bool (*name##_request_permission)(uint64_t * result) =               \
       &_##name##_request_permission
 #endif
-
-#define NE_CORE_ENCLOSURE(code)                                                \
-  do {                                                                         \
-    code                                                                       \
-  } while (NE_CORE_FALSE)
-
-#if !defined(NDEBUG)
-#define NE_CORE_ASSERT(condition, text)                                        \
-  NE_CORE_ENCLOSURE(if (!(condition)) ne_core_error(0, (text));)
-#else
-#define NE_CORE_ASSERT(condition, text)
-#endif
-#define NE_CORE_ERROR_IF(condition, text) NE_CORE_ASSERT(!(condition), text)
-#define NE_CORE_ERROR(text) NE_CORE_ASSERT(0, text)
-
-#define NE_CORE_RESULT(code) NE_CORE_ENCLOSURE(if (result) *result = code;)
 
 NE_CORE_BEGIN
 
