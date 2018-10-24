@@ -2,11 +2,11 @@
 #pragma once
 
 #if defined(__cplusplus)
-#define NE_BEGIN extern "C" {
-#define NE_END }
+#define NE_CORE_BEGIN extern "C" {
+#define NE_CORE_END }
 #else
-#define NE_BEGIN
-#define NE_END
+#define NE_CORE_BEGIN
+#define NE_CORE_END
 #endif
 
 // This should always be defined by the build system, however
@@ -14,15 +14,15 @@
 // own project then it would not be defined. This is acceptable
 // practice if the user is only including the header, but to build
 // the c files (or a library) the user/build system must specify.
-#if !defined(NE_PLATFORM_NAME)
-#define NE_PLATFORM_NAME "Undefined"
-#define NE_PLATFORM_UNDEFINED 1
+#if !defined(NE_CORE_PLATFORM_NAME)
+#define NE_CORE_PLATFORM_NAME "Undefined"
+#define NE_CORE_PLATFORM_UNDEFINED 1
 #endif
 
-#if defined(NE_PLATFORM_NE)
+#if defined(NE_CORE_PLATFORM_NE)
 // This attribute is valid in clang/llvm (the only compiler we use for
-// NE_PLATFORM_NE).
-#define NE_API extern __attribute__((section("ne")))
+// NE_CORE_PLATFORM_NE).
+#define NE_CORE_API extern __attribute__((section("ne")))
 
 // Since we're compiling through LLVM / Clang with a specified data-layout
 // then we know the exact sizes of the following types.
@@ -37,13 +37,19 @@ typedef unsigned long long uint64_t;
 typedef long long intmax_t;
 typedef unsigned long long uintmax_t;
 #else
-#define NE_API extern
+#define NE_CORE_API extern
 
-// If we're not compiling with NE_PLATFORM_NE defined, it means we may be on any
-// compiler and we are most likely compiling with libc. Because of this, we must
-// rely on each compilers definition of sized types.
+// If we're not compiling with NE_CORE_PLATFORM_NE defined, it means we may be
+// on any compiler and we are most likely compiling with libc. Because of this,
+// we must rely on each compilers definition of sized types.
 #include <stdint.h>
 #endif
+
+typedef uint8_t ne_core_bool;
+
+#define NE_CORE_TRUE 1
+#define NE_CORE_FALSE 0
+#define NE_CORE_NULL 0
 
 typedef uint64_t ne_core_primitive_type;
 static const ne_core_primitive_type ne_core_primitive_type_int8 = 0;
@@ -58,15 +64,15 @@ static const ne_core_primitive_type ne_core_primitive_type_float = 8;
 static const ne_core_primitive_type ne_core_primitive_type_double = 9;
 static const ne_core_primitive_type ne_core_primitive_type_pointer = 10;
 
-#define NE_DECLARE_PACKAGE(name, major, minor)                                 \
-  NE_API ne_core_bool (*name##_supported)(uint64_t * result);                  \
-  NE_API ne_core_bool (*name##_request_permission)(uint64_t * result);         \
-  NE_API uint64_t (*name##_version_linked_major)(uint64_t * result);           \
-  NE_API uint64_t (*name##_version_linked_minor)(uint64_t * result);           \
+#define NE_CORE_DECLARE_PACKAGE(name, major, minor)                            \
+  NE_CORE_API ne_core_bool (*name##_supported)(uint64_t * result);             \
+  NE_CORE_API ne_core_bool (*name##_request_permission)(uint64_t * result);    \
+  NE_CORE_API uint64_t (*name##_version_linked_major)(uint64_t * result);      \
+  NE_CORE_API uint64_t (*name##_version_linked_minor)(uint64_t * result);      \
   static const uint64_t name##_version_header_major = major; /* NOLINT */      \
   static const uint64_t name##_version_header_minor = minor  /* NOLINT */
 
-#define NE_DEFINE_PACKAGE_VERSION(name)                                        \
+#define NE_CORE_DEFINE_PACKAGE_VERSION(name)                                   \
   static uint64_t _##name##_version_linked_major(uint64_t *result) {           \
     if (result)                                                                \
       *result = ne_core_result_success;                                        \
@@ -82,28 +88,28 @@ static const ne_core_primitive_type ne_core_primitive_type_pointer = 10;
   uint64_t (*name##_version_linked_minor)(uint64_t * result) =                 \
       &_##name##_version_linked_minor
 
-#if defined(NE_PLATFORM_NE)
-// When defining a package in NE_PLATFORM_NE, we never implement the 'supported'
-// or 'request_permission' functions. It is up to the sandbox to automatically
-// provide implementations for those functions for every package.
-#define NE_DEFINE_PACKAGE(name) NE_DEFINE_PACKAGE_VERSION(name)
+#if defined(NE_CORE_PLATFORM_NE)
+// When defining a package in NE_CORE_PLATFORM_NE, we never implement the
+// 'supported' or 'request_permission' functions. It is up to the sandbox to
+// automatically provide implementations for those functions for every package.
+#define NE_CORE_DEFINE_PACKAGE(name) NE_CORE_DEFINE_PACKAGE_VERSION(name)
 #else
 // When just linking against ne and using it as a library, we the library will
 // define that it is supported and that all request permission functions
 // automatically return true.
 
 // NOLINTNEXTLINE
-#define NE_DEFINE_PACKAGE(name)                                                \
-  NE_DEFINE_PACKAGE_VERSION(name);                                             \
+#define NE_CORE_DEFINE_PACKAGE(name)                                           \
+  NE_CORE_DEFINE_PACKAGE_VERSION(name);                                        \
   static ne_core_bool _##name##_supported(uint64_t *result) {                  \
     if (result)                                                                \
       *result = ne_core_result_success;                                        \
-    return ne_core_true;                                                       \
+    return NE_CORE_TRUE;                                                       \
   }                                                                            \
   static ne_core_bool _##name##_request_permission(uint64_t *result) {         \
     if (result)                                                                \
       *result = ne_core_result_success;                                        \
-    return ne_core_true;                                                       \
+    return NE_CORE_TRUE;                                                       \
   }                                                                            \
   ne_core_bool (*name##_supported)(uint64_t * result) = &_##name##_supported;  \
   ne_core_bool (*name##_request_permission)(uint64_t * result) =               \
@@ -113,20 +119,20 @@ static const ne_core_primitive_type ne_core_primitive_type_pointer = 10;
 #define NE_CORE_ENCLOSURE(code)                                                \
   do {                                                                         \
     code                                                                       \
-  } while (ne_core_false)
+  } while (NE_CORE_FALSE)
 
 #if !defined(NDEBUG)
-#define NE_ASSERT(condition, text)                                             \
+#define NE_CORE_ASSERT(condition, text)                                        \
   NE_CORE_ENCLOSURE(if (!(condition)) ne_core_error(0, (text));)
 #else
-#define NE_ASSERT(condition, text)
+#define NE_CORE_ASSERT(condition, text)
 #endif
-#define NE_ERROR_IF(condition, text) NE_ASSERT(!(condition), text)
-#define NE_ERROR(text) NE_ASSERT(0, text)
+#define NE_CORE_ERROR_IF(condition, text) NE_CORE_ASSERT(!(condition), text)
+#define NE_CORE_ERROR(text) NE_CORE_ASSERT(0, text)
 
-#define NE_SET_RESULT(code) NE_CORE_ENCLOSURE(if (result) *result = code;)
+#define NE_CORE_RESULT(code) NE_CORE_ENCLOSURE(if (result) *result = code;)
 
-NE_BEGIN
+NE_CORE_BEGIN
 
 // This header is considered tentative and is a work in progress. It contains
 // the API as well as notes about how the API should work. Some of these notes
@@ -145,7 +151,7 @@ NE_BEGIN
 // Definitions:
 //
 //  invalid:
-//    Every call to the API functions will return null, 0, ne_core_false, or the
+//    Every call to the API functions will return null, 0, NE_CORE_FALSE, or the
 //    binary 0 equivalent.
 //  sub-api:
 //    All functions labeled ne_xxxxx where xxxxx is a name.
@@ -179,7 +185,7 @@ NE_BEGIN
 //    not expect it.
 
 // If a 'request_permission' function exists then it must be called and must
-// return ne_core_true, otherwise all calls are *invalid* and return
+// return NE_CORE_TRUE, otherwise all calls are *invalid* and return
 // 'ne_core_result_permission_denied'.
 
 // The 'request_permission' functions are never defined by a library, and are
@@ -260,14 +266,7 @@ NE_BEGIN
 // Ne APIS never abbreviate words and always use the whole word, for example
 // 'microphone' instead of 'mic', 'rectangle' instead of 'rect'...
 
-typedef uint8_t ne_core_bool;
-
-static const ne_core_bool ne_core_true = 1;
-static const ne_core_bool ne_core_false = 0;
-
-NE_DECLARE_PACKAGE(ne_core, 0, 0);
-
-static void *const ne_core_null = 0;
+NE_CORE_DECLARE_PACKAGE(ne_core, 0, 0);
 
 // The first call to be made in an ne application.
 // Static initialization in llvm will occur before this call.
@@ -305,15 +304,17 @@ static const uint64_t ne_core_result_allocation_failed = (uint64_t)-7;
 
 // Intrinsic functions are not treated as function pointers because they are
 // expected to be implemented directly by the compiler and heavily optimized.
-NE_API void ne_intrinsic_memory_set(void *memory, uint8_t value, uint64_t size);
-NE_API int64_t ne_intrinsic_memory_compare(void *a, void *b, uint64_t size);
+NE_CORE_API void ne_intrinsic_memory_set(void *memory, uint8_t value,
+                                         uint64_t size);
+NE_CORE_API int64_t ne_intrinsic_memory_compare(void *a, void *b,
+                                                uint64_t size);
 
 // This is the first function that should be called to test if functionality is
 // working. The application will display a Hello World message in a console,
 // notification, or non-blocking/non-modal message box. This is also used as an
 // introductory function to demonstrate that an application is working. This
 // function should be non-blocking.
-NE_API void (*ne_core_hello_world)(uint64_t *result);
+NE_CORE_API void (*ne_core_hello_world)(uint64_t *result);
 
 typedef void (*ne_core_main_loop_callback)(void *user_data);
 // To run on any cooperative multi-tasked system (e.g. Emscripten) we must
@@ -328,24 +329,24 @@ typedef void (*ne_core_main_loop_callback)(void *user_data);
 // multi-tasked systems. To stop the program, call 'ne_core_exit'.
 //     ne_core_result_error:
 //       If the function was called more than once.
-NE_API void (*ne_core_main_loop)(uint64_t *result,
-                                 ne_core_main_loop_callback callback,
-                                 void *user_data);
+NE_CORE_API void (*ne_core_main_loop)(uint64_t *result,
+                                      ne_core_main_loop_callback callback,
+                                      void *user_data);
 
 // Terminates the program immediately. Flushes and closes any open streams.
 // Invokes global destructors.
-NE_API void (*ne_core_exit)(uint64_t *result, int32_t return_code);
+NE_CORE_API void (*ne_core_exit)(uint64_t *result, int32_t return_code);
 
 // Signal an error to the application. This is mostly used for unit tests.
-NE_API void (*ne_core_error)(uint64_t *result, const char *message);
+NE_CORE_API void (*ne_core_error)(uint64_t *result, const char *message);
 
 //    #internally-called, #user-owned-memory
 //    @ne_memory_result_allocation_failed:
 //      Not enough system memory or address space, or other system error.
-NE_API uint8_t *(*ne_core_allocate)(uint64_t *result, uint64_t sizeBytes);
+NE_CORE_API uint8_t *(*ne_core_allocate)(uint64_t *result, uint64_t sizeBytes);
 
 // Frees the memory (only should be memory returned from 'ne_memory_allocate').
-NE_API void (*ne_core_free)(uint64_t *result, void *memory);
+NE_CORE_API void (*ne_core_free)(uint64_t *result, void *memory);
 
 typedef struct ne_core_event ne_core_event;
 struct ne_core_event {
@@ -369,17 +370,18 @@ struct ne_core_event {
 
 // Gets the event at the front of the event queue (does not remove it from the
 // queue). Returns true if an event was retrieved, false otherwise.
-NE_API ne_core_bool (*ne_core_event_peek)(uint64_t *result,
-                                          ne_core_event *event_out);
+NE_CORE_API ne_core_bool (*ne_core_event_peek)(uint64_t *result,
+                                               ne_core_event *event_out);
 
 // Removes the event at the front of the event queue. The queue is first in
 // first out (FIFO). Returns true if an event was removed, false otherwise.
-NE_API ne_core_bool (*ne_core_event_dequeue)(uint64_t *result);
+NE_CORE_API ne_core_bool (*ne_core_event_dequeue)(uint64_t *result);
 
 // Queues an event onto the event queue. The queue is first in first out (FIFO).
 //    #internally-called
-NE_API ne_core_bool (*ne_core_event_enqueue)(uint64_t *result,
-                                             const uint64_t *type, void *data);
+NE_CORE_API ne_core_bool (*ne_core_event_enqueue)(uint64_t *result,
+                                                  const uint64_t *type,
+                                                  void *data);
 
 typedef struct ne_core_enumerator ne_core_enumerator;
 struct ne_core_enumerator {
@@ -474,4 +476,4 @@ struct ne_core_stream {
   uint8_t opaque[16];
 };
 
-NE_END
+NE_CORE_END

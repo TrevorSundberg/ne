@@ -1,11 +1,11 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test/test.h"
-NE_BEGIN
+NE_CORE_BEGIN
 
-NE_DEFINE_PACKAGE(test);
+NE_CORE_DEFINE_PACKAGE(test);
 
 int32_t ne_core_main(int32_t argc, char *argv[]) {
-  ne_core_bool result = ne_core_true;
+  ne_core_bool result = NE_CORE_TRUE;
   result &= test_core();
   result &= test_io();
 
@@ -13,4 +13,4 @@ int32_t ne_core_main(int32_t argc, char *argv[]) {
   return (int32_t)!result;
 }
 
-NE_END
+NE_CORE_END

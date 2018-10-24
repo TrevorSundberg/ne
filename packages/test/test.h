@@ -28,11 +28,11 @@
 //#include "../test_port/test_port.h"
 //#include "../test_print/test_print.h"
 //#include "../test_window/test_window.h"
-NE_BEGIN
+NE_CORE_BEGIN
 
-NE_DECLARE_PACKAGE(test, 0, 0);
+NE_CORE_DECLARE_PACKAGE(test, 0, 0);
 
 // Runs all the tests for all standard ne-libraries.
 int32_t ne_core_main(int32_t argc, char *argv[]);
 
-NE_END
+NE_CORE_END

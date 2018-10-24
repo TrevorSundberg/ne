@@ -1,9 +1,9 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
-NE_BEGIN
+NE_CORE_BEGIN
 
-NE_DECLARE_PACKAGE(test_core, 0, 0);
+NE_CORE_DECLARE_PACKAGE(test_core, 0, 0);
 
 ne_core_bool test_core_validate(ne_core_bool value, const char *message);
 
@@ -47,7 +47,7 @@ ne_core_bool test_core(void);
 
 #define TEST_CORE_RUN(name)                                                    \
   test_core_table table;                                                       \
-  table.user_data = ne_core_null;                                              \
+  table.user_data = NE_CORE_NULL;                                              \
   table.full_tests = &name##_full_tests;                                       \
   table.null_tests = &name##_null_tests;                                       \
   table.shared_tests = &name##_shared_tests;                                   \
@@ -86,4 +86,4 @@ ne_core_bool test_core(void);
 #define TEST_CORE_PASS_PARAMETERS                                              \
   is_success_out, result, expected_result, user_data
 
-NE_END
+NE_CORE_END

@@ -1,12 +1,12 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test_core/test_core.h"
-NE_BEGIN
+NE_CORE_BEGIN
 
-NE_DEFINE_PACKAGE(test_core);
+NE_CORE_DEFINE_PACKAGE(test_core);
 
 ne_core_bool test_core_validate(ne_core_bool value, const char *message) {
   if (!value)
-    ne_core_error(ne_core_null, message);
+    ne_core_error(NE_CORE_NULL, message);
 
   // Return the value right back out so we can use it in an or statement.
   return value;
@@ -133,14 +133,14 @@ static void test_core_all(ne_core_bool *is_success_out, uint64_t *result,
 }
 
 ne_core_bool test_core_run(test_core_table *table) {
-  ne_core_bool is_success = ne_core_true;
+  ne_core_bool is_success = NE_CORE_TRUE;
   uint64_t last_result = ne_core_result_not_set;
 
   // Test everything with a valid result pointer.
   test_core_all(&is_success, &last_result, table);
 
   // Test everything with a null result pointer.
-  test_core_all(&is_success, ne_core_null, table);
+  test_core_all(&is_success, NE_CORE_NULL, table);
 
   return is_success;
 }
@@ -152,7 +152,7 @@ static void ne_core_full_tests(ne_core_bool *is_success_out, uint64_t *result,
   TEST_CORE_CLEAR_RESULT();
   void *allocation = ne_core_allocate(result, 1);
   TEST_CORE_EXPECT_RESULT("ne_core_allocate", expected_result);
-  TEST_CORE_EXPECT("ne_core_allocate", allocation != ne_core_null);
+  TEST_CORE_EXPECT("ne_core_allocate", allocation != NE_CORE_NULL);
 
   // Write a single byte to the allocated memory to ensure it's writable.
   if (allocation)
@@ -166,12 +166,12 @@ static void ne_core_full_tests(ne_core_bool *is_success_out, uint64_t *result,
   TEST_CORE_CLEAR_RESULT();
   TEST_CORE_EXPECT("ne_core_allocate",
                    ne_core_allocate(result, 0xFFFFFFFFFFFFFFFF) ==
-                       ne_core_null);
+                       NE_CORE_NULL);
   TEST_CORE_EXPECT_RESULT("ne_core_allocate", ne_core_result_allocation_failed);
 
   // Test the unit test functions too!
   TEST_CORE_EXPECT("test_string_length",
-                   test_core_string_length(ne_core_null) == 0);
+                   test_core_string_length(NE_CORE_NULL) == 0);
   TEST_CORE_EXPECT("test_string_length", test_core_string_length("") == 0);
   TEST_CORE_EXPECT("test_string_length", test_core_string_length("hello") == 5);
 
@@ -206,11 +206,11 @@ static void ne_core_null_tests(ne_core_bool *is_success_out, uint64_t *result,
 
   TEST_CORE_CLEAR_RESULT();
   TEST_CORE_EXPECT("ne_core_allocate",
-                   ne_core_allocate(result, 1) == ne_core_null);
+                   ne_core_allocate(result, 1) == NE_CORE_NULL);
   TEST_CORE_EXPECT_RESULT("ne_core_allocate", expected_result);
 
   TEST_CORE_CLEAR_RESULT();
-  ne_core_free(result, ne_core_null);
+  ne_core_free(result, NE_CORE_NULL);
   TEST_CORE_EXPECT_RESULT("ne_core_free", expected_result);
 }
 
@@ -224,4 +224,4 @@ static void ne_core_shared_tests(ne_core_bool *is_success_out, uint64_t *result,
 
 ne_core_bool test_core(void) { TEST_CORE_RUN(ne_core); }
 
-NE_END
+NE_CORE_END

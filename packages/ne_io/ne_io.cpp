@@ -2,20 +2,20 @@
 #include "../ne_io/ne_io.h"
 #include <stdio.h>
 
-#if defined(NE_PLATFORM_WINDOWS)
+#if defined(NE_CORE_PLATFORM_WINDOWS)
 #include <Windows.h>
 #endif
 
-NE_BEGIN
+NE_CORE_BEGIN
 
-NE_DEFINE_PACKAGE(ne_io);
+NE_CORE_DEFINE_PACKAGE(ne_io);
 
 /******************************************************************************/
 static uint64_t _input_read(uint64_t *result, ne_core_stream *stream,
                             void *buffer, uint64_t size,
                             ne_core_bool allow_blocking) {
 
-#if defined(NE_PLATFORM_WINDOWS)
+#if defined(NE_CORE_PLATFORM_WINDOWS)
   SetConsoleCP(CP_UTF8);
   SetConsoleOutputCP(CP_UTF8);
 
@@ -35,14 +35,14 @@ static uint64_t _input_read(uint64_t *result, ne_core_stream *stream,
     // size_t wide_size = (size_t)size * sizeof(wchar_t);
     // wchar_t *wide_buffer = (wchar_t *)malloc(wide_size);
     // if (!wide_buffer) {
-    //  NE_SET_RESULT(ne_core_result_error);
+    //  NE_CORE_RESULT(ne_core_result_error);
     //  return;
     //}
 
     // size_t input_size = (size_t)size * sizeof(INPUT_RECORD);
     // INPUT_RECORD *input_buffer = (INPUT_RECORD *)malloc(input_size);
     // if (!input_buffer) {
-    //  NE_SET_RESULT(ne_core_result_error);
+    //  NE_CORE_RESULT(ne_core_result_error);
     //  return 0;
     //}
 
@@ -51,13 +51,13 @@ static uint64_t _input_read(uint64_t *result, ne_core_stream *stream,
       INPUT_RECORD record;
       DWORD events_peeked = 0;
       if (!PeekConsoleInputW(handle, &record, 1, &events_peeked)) {
-        NE_SET_RESULT(ne_core_result_error);
+        NE_CORE_RESULT(ne_core_result_error);
         return 0;
       }
 
       if (events_peeked == 0)
         break;
-      NE_ASSERT(events_peeked == 1, "Should have only peeked 1 event");
+      NE_CORE_ASSERT(events_peeked == 1, "Should have only peeked 1 event");
 
       if (record.EventType == KEY_EVENT && record.Event.KeyEvent.bKeyDown) {
         WCHAR *wide_char = &record.Event.KeyEvent.uChar.UnicodeChar;
@@ -65,7 +65,7 @@ static uint64_t _input_read(uint64_t *result, ne_core_stream *stream,
             WideCharToMultiByte(CP_UTF8, 0, wide_char, 1, 0, 0, 0, 0);
         if ((uint64_t)multibyte_size + bytes_read <= size) {
           WideCharToMultiByte(CP_UTF8, 0, wide_char, 1,
-                              (uint8_t *)buffer + bytes_read, multibyte_size, 0,
+                              (char *)buffer + bytes_read, multibyte_size, 0,
                               0);
           bytes_read += (uint64_t)multibyte_size;
         }
@@ -73,12 +73,12 @@ static uint64_t _input_read(uint64_t *result, ne_core_stream *stream,
 
       DWORD events_read = 0;
       if (!ReadConsoleInputW(handle, &record, 1, &events_read)) {
-        NE_ERROR("If we peeked the input, we should have been able to read it");
-        NE_SET_RESULT(ne_core_result_error);
+        NE_CORE_ERROR("If we peeked the input, we should have been able to read it");
+        NE_CORE_RESULT(ne_core_result_error);
         return 0;
       }
 
-      NE_ASSERT(events_read == 1, "Should have only read 1 event");
+      NE_CORE_ASSERT(events_read == 1, "Should have only read 1 event");
     }
 
     return bytes_read;
@@ -86,7 +86,7 @@ static uint64_t _input_read(uint64_t *result, ne_core_stream *stream,
     // DWORD characters_read = 0;
     // if (!ReadConsoleW(handle, wide_buffer, (DWORD)size, &characters_read, 0))
     // {
-    //  NE_SET_RESULT(ne_core_result_error);
+    //  NE_CORE_RESULT(ne_core_result_error);
     //  return;
     //}
 
@@ -96,12 +96,12 @@ static uint64_t _input_read(uint64_t *result, ne_core_stream *stream,
     // if (!PeekNamedPipe(handle, wide_buffer, wide_size, &bytes_read,
     //                   &total_bytes_available, &bytes_left_this_message)) {
     //  DWORD error = GetLastError();
-    //  NE_SET_RESULT(ne_core_result_error);
+    //  NE_CORE_RESULT(ne_core_result_error);
     //  free(wide_buffer);
     //  return 0;
     //}
 
-    // NE_ASSERT(
+    // NE_CORE_ASSERT(
     //    bytes_read % sizeof(wchar_t) == 0,
     //    "With the console we should always be reading multiples of wchar_t");
 
@@ -274,4 +274,4 @@ void _ne_io_get_output(uint64_t *result, ne_core_stream *stream_out) {
 void (*ne_io_get_output)(uint64_t *result,
                          ne_core_stream *stream_out) = &_ne_io_get_output;
 
-NE_END
+NE_CORE_END
