@@ -1,13 +1,13 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
-#include "../ne_core/ne_core.h"
 #include "../ne_clipboard/ne_clipboard.h"
+#include "../ne_core/ne_core.h"
 #include "../ne_cpu/ne_cpu.h"
 #include "../ne_debug/ne_debug.h"
+#include "../ne_display/ne_display.h"
 #include "../ne_filesystem/ne_filesystem.h"
 #include "../ne_io/ne_io.h"
 #include "../ne_keyboard/ne_keyboard.h"
-#include "../ne_memory/ne_memory.h"
 #include "../ne_mouse/ne_mouse.h"
 #include "../ne_package/ne_package.h"
 #include "../ne_power/ne_power.h"
@@ -21,7 +21,6 @@
 // These are APIs that are planned:
 //#include "../ne_atomic/ne_atomic.h"
 //#include "../ne_audio/ne_audio.h"
-//#include "../ne_event/ne_event.h"
 //#include "../ne_gamepad/ne_gamepad.h"
 //#include "../ne_haptic/ne_haptic.h"
 //#include "../ne_intrinsic/ne_intrinsic.h"

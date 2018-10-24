@@ -1,146 +1,146 @@
 - dependency:
-    name: ne_core
+    name: test_core
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_clipboard
+    name: test_clipboard
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_cpu
+    name: test_cpu
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_debug
+    name: test_debug
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_display
+    name: test_display
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_file
+    name: test_file
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_filesystem
+    name: test_filesystem
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_io
+    name: test_io
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_keyboard
+    name: test_keyboard
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_memory
+    name: test_memory
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_mouse
+    name: test_mouse
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_package
+    name: test_package
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_power
+    name: test_power
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_sandbox
+    name: test_sandbox
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_socket
+    name: test_socket
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_thread
+    name: test_thread
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_timer
+    name: test_timer
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_touch
+    name: test_touch
     major: 0
     minor: 0
 
 - dependency:
-    name: ne_vulkan
+    name: test_vulkan
     major: 0
     minor: 0
 
 
 # These are APIs that are planned:
 #- dependency:
-#    name: ne_atomic
+#    name: test_atomic
 #    major: 0
 #    minor: 0
 #
 #- dependency:
-#    name: ne_audio
+#    name: test_audio
 #    major: 0
 #    minor: 0
 #
 #- dependency:
-#    name: ne_event
+#    name: test_event
 #    major: 0
 #    minor: 0
 #
 #- dependency:
-#    name: ne_gamepad
+#    name: test_gamepad
 #    major: 0
 #    minor: 0
 #
 #- dependency:
-#    name: ne_haptic
+#    name: test_haptic
 #    major: 0
 #    minor: 0
 #
 #- dependency:
-#    name: ne_intrinsic
+#    name: test_intrinsic
 #    major: 0
 #    minor: 0
 #
 #- dependency:
-#    name: ne_joystick
+#    name: test_joystick
 #    major: 0
 #    minor: 0
 #
 #- dependency:
-#    name: ne_port
+#    name: test_port
 #    major: 0
 #    minor: 0
 #
 #- dependency:
-#    name: ne_print
+#    name: test_print
 #    major: 0
 #    minor: 0
 #
 #- dependency:
-#    name: ne_window
+#    name: test_window
 #    major: 0
 #    minor: 0

@@ -1,0 +1,7 @@
+Checks: ''
+HeaderFilterRegex: ''
+AnalyzeTemporaryDtors: true
+User: user
+CheckOptions:
+  - key: a
+    value: 0

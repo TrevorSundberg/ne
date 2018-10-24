@@ -3,6 +3,6 @@
     major: 0
     minor: 0
 - dependency:
-    name: ne_memory
+    name: ne_filesystem
     major: 0
     minor: 0

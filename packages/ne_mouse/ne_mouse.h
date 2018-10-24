@@ -5,7 +5,7 @@ NE_BEGIN
 
 NE_DECLARE_PACKAGE(ne_mouse, 0, 0);
 
-NE_API ne_core_bool (*ne_mouse_is_touch_emulated)(uint64_t* result);
+NE_API ne_core_bool (*ne_mouse_is_touch_emulated)(uint64_t *result);
 
 typedef uint64_t ne_mouse_index;
 static const ne_mouse_index ne_mouse_index_left = 0;
@@ -17,11 +17,13 @@ static const ne_mouse_index ne_mouse_index_count = 5;
 
 // Returns the state of a mouse button at the exact time of call.
 // Note that events don't need to be pumped for this value to change.
-// Returning 'ne_core_true' means the button is down and 'ne_core_false' means up.
-// This represents the physical mouse, which means it may change
-// independent of any application focus.
-NE_API ne_core_bool (*ne_mouse_is_down)(uint64_t* result, ne_keyboard_index index);
+// Returning 'ne_core_true' means the button is down and 'ne_core_false' means
+// up. This represents the physical mouse, which means it may change independent
+// of any application focus.
+NE_API ne_core_bool (*ne_mouse_is_down)(uint64_t *result, ne_mouse_index index);
 
-NE_API void (*ne_mouse_get_position_screen)(uint64_t* result, int64_t* screen_x_out, int64_t* screen_y_out);
+NE_API void (*ne_mouse_get_position_screen)(uint64_t *result,
+                                            int64_t *screen_x_out,
+                                            int64_t *screen_y_out);
 
 NE_END

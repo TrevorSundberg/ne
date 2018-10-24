@@ -12,6 +12,7 @@ static const ne_power_state ne_power_state_charging = 2;
 static const ne_power_state ne_power_state_charged = 3;
 static const ne_power_state ne_power_state_count = 4;
 
-NE_API ne_power_state (*ne_power_get_state)(uint64_t* result, int64_t* seconds, int64_t* percent);
+NE_API ne_power_state (*ne_power_get_state)(uint64_t *result, int64_t *seconds,
+                                            int64_t *percent);
 
 NE_END

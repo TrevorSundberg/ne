@@ -16,6 +16,7 @@ static const ne_keyboard_index ne_keyboard_index_count = 3;
 // Returning 'ne_core_true' means the key is down and 'ne_core_false' means up.
 // This represents the physical keyboard, which means it may change
 // independent of any application focus.
-NE_API ne_core_bool (*ne_keyboard_is_down)(uint64_t* result, ne_keyboard_index index);
+NE_API ne_core_bool (*ne_keyboard_is_down)(uint64_t *result,
+                                           ne_keyboard_index index);
 
 NE_END

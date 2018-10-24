@@ -4,8 +4,8 @@ NE_BEGIN
 
 NE_DEFINE_PACKAGE(test_timer);
 
-static void ne_timer_full_tests(ne_core_bool* is_success_out, uint64_t* result, uint64_t expected_result, void* user_data)
-{
+static void ne_timer_full_tests(ne_core_bool *is_success_out, uint64_t *result,
+                                uint64_t expected_result, void *user_data) {
   TEST_IGNORE_UNUSED_PARAMETERS();
 
   TEST_CLEAR_RESULT();
@@ -15,11 +15,13 @@ static void ne_timer_full_tests(ne_core_bool* is_success_out, uint64_t* result, 
 
   // Validate invalid timer values.
   TEST_CLEAR_RESULT();
-  TEST_EXPECT("ne_timer_frequency", ne_timer_frequency(result, timer_count) == 0);
+  TEST_EXPECT("ne_timer_frequency",
+              ne_timer_frequency(result, timer_count) == 0);
   TEST_EXPECT_RESULT("ne_timer_frequency", ne_core_result_invalid_parameter);
 
   TEST_CLEAR_RESULT();
-  TEST_EXPECT("ne_timer_frequency", ne_timer_frequency(result, 0xFFFFFFFFFFFFFFFF) == 0);
+  TEST_EXPECT("ne_timer_frequency",
+              ne_timer_frequency(result, 0xFFFFFFFFFFFFFFFF) == 0);
   TEST_EXPECT_RESULT("ne_timer_frequency", ne_core_result_invalid_parameter);
 
   TEST_CLEAR_RESULT();
@@ -27,14 +29,14 @@ static void ne_timer_full_tests(ne_core_bool* is_success_out, uint64_t* result, 
   TEST_EXPECT_RESULT("ne_timer_ticks", ne_core_result_invalid_parameter);
 
   TEST_CLEAR_RESULT();
-  TEST_EXPECT("ne_timer_ticks", ne_timer_ticks(result, 0xFFFFFFFFFFFFFFFF) == 0);
+  TEST_EXPECT("ne_timer_ticks",
+              ne_timer_ticks(result, 0xFFFFFFFFFFFFFFFF) == 0);
   TEST_EXPECT_RESULT("ne_timer_ticks", ne_core_result_invalid_parameter);
 
   uint64_t last_frequency = 0xFFFFFFFFFFFFFFFF;
 
   // Check that each timer actually increments and has a valid frequency.
-  for (uint32_t timer = 0; timer < timer_count; ++timer)
-  {
+  for (uint32_t timer = 0; timer < timer_count; ++timer) {
     TEST_CLEAR_RESULT();
     uint64_t frequency = ne_timer_frequency(result, timer);
     TEST_EXPECT("ne_timer_frequency", frequency != 0);
@@ -50,15 +52,14 @@ static void ne_timer_full_tests(ne_core_bool* is_success_out, uint64_t* result, 
 
     // Verify that it increments, otherwise it will freeze here.
     TEST_CLEAR_RESULT();
-    while (ne_timer_ticks(result, timer) <= initial_ticks)
-    {
+    while (ne_timer_ticks(result, timer) <= initial_ticks) {
       TEST_EXPECT_RESULT("ne_timer_ticks", expected_result);
     }
   }
 }
 
-static void ne_timer_null_tests(ne_core_bool* is_success_out, uint64_t* result, uint64_t expected_result, void* user_data)
-{
+static void ne_timer_null_tests(ne_core_bool *is_success_out, uint64_t *result,
+                                uint64_t expected_result, void *user_data) {
   TEST_IGNORE_UNUSED_PARAMETERS();
 
   TEST_CLEAR_RESULT();
@@ -74,14 +75,12 @@ static void ne_timer_null_tests(ne_core_bool* is_success_out, uint64_t* result, 
   TEST_EXPECT_RESULT("ne_timer_ticks", ne_core_result_invalid_parameter);
 }
 
-static void ne_timer_shared_tests(ne_core_bool* is_success_out, uint64_t* result, uint64_t expected_result, void* user_data)
-{
+static void ne_timer_shared_tests(ne_core_bool *is_success_out,
+                                  uint64_t *result, uint64_t expected_result,
+                                  void *user_data) {
   TEST_IGNORE_UNUSED_PARAMETERS();
 }
 
-ne_core_bool test_timer()
-{
-  TEST_RUN(ne_timer);
-}
+ne_core_bool test_timer() { TEST_RUN(ne_timer); }
 
 NE_END
