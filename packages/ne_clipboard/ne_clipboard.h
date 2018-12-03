@@ -22,15 +22,24 @@ NE_CORE_API const char *(*ne_clipboard_get_text)(
     uint64_t *result, ne_clipboard_texttype texttype);
 
 // May result in 'ne_clipboard_result_texttype_not_supported'.
-NE_CORE_API void (*ne_clipboard_set_text)(uint64_t *result, const char *text,
+NE_CORE_API void (*ne_clipboard_set_text)(uint64_t *result,
+                                          const char *text,
                                           ne_clipboard_texttype texttype);
 
-struct ne_clipboard_image {
-  uint8_t *buffer;
+typedef struct ne_clipboard_image ne_clipboard_image;
+/// An rgba32f formatted image.
+/// The size can be computed as `size_x * size_y * 4 * sizeof(float)`.
+struct ne_clipboard_image
+{
+  /// The image data with `size_x * size_y * 4` floats in rgba order.
+  float *buffer;
+
+  /// Width of the image.
   uint64_t size_x;
+
+  /// Height of the image.
   uint64_t size_y;
 };
-typedef struct ne_clipboard_image ne_clipboard_image;
 
 // Grab an image off the clipboard. We use the most uncompressed
 // format available with the highest bit depth and supports HDR.

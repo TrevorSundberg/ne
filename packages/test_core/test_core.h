@@ -1,83 +1,111 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
+#include "../ne_core/ne_intrinsic.h"
 NE_CORE_BEGIN
 
-NE_CORE_DECLARE_PACKAGE(test_core, 0, 0);
+#define TEST_CORE_SIMULATED_STREAM "<This is a test>"
+#define TEST_CORE_SIMULATED_SIZE (sizeof(TEST_CORE_SIMULATED_STREAM) - 1)
 
-ne_core_bool test_core_validate(ne_core_bool value, const char *message);
+typedef struct test_core_table test_core_table;
+/// This table contains all the test functions and is automatically
+/// built using #TEST_CORE_RUN.
+struct test_core_table
+{
+  ne_core_bool (*supported)(uint64_t *result);
+  ne_core_bool (*check_permission)(uint64_t *result);
+  void (*request_permission)(uint64_t *result, const void *user_data);
+  ne_core_bool simulated_environment;
+  ne_core_bool is_final_run;
+
+  // This is called when we know the API is both supported and we have
+  // permission.
+  void (*full_tests)(test_core_table *table);
+
+  // These are tests we run if the API is not supported or permission is denied.
+  // All calls are expected to return zero/null, and output the expected result.
+  void (*null_tests)(test_core_table *table);
+
+  // These tests don't rely on the return value and therefore can be called
+  // during both full/null phases.
+  void (*shared_tests)(test_core_table *table);
+
+  // The result we expect out of the tests that are running.
+  uint64_t expected_result;
+
+  // A pointer to the result that we give to each call.
+  uint64_t *result;
+
+  // Indicates whether all operations were a success (default NE_CORE_TRUE).
+  ne_core_bool success;
+
+  // Any data we want to pass to the tests.
+  void *user_data;
+};
+
+ne_core_bool test_core_validate(ne_core_bool value,
+                                const char *file,
+                                int64_t line,
+                                const char *message);
 
 uint64_t test_core_string_length(const char *string);
 
 int64_t test_core_string_compare(const char *a, const char *b);
 
-int64_t test_core_memory_compare_value(void *memory, uint8_t value,
+int64_t test_core_memory_compare_value(void *memory,
+                                       uint8_t value,
                                        uint64_t size);
 
-typedef struct test_core_table test_core_table;
-struct test_core_table {
-  ne_core_bool (*supported)(uint64_t *result);
-  ne_core_bool (*request_permission)(uint64_t *result);
-  uint64_t (*version_linked_major)(uint64_t *result);
-  uint64_t (*version_linked_minor)(uint64_t *result);
-  uint64_t version_header_major;
-  uint64_t version_header_minor;
+// Initializes a buffer with psuedo-random memory.
+void test_core_random_initialize(void *memory, uint64_t size);
 
-  // This is called when we know the API is both supported and we have
-  // permission.
-  void (*full_tests)(ne_core_bool *is_success_out, uint64_t *result,
-                     uint64_t expected_result, void *user_data);
+int64_t test_core_random_compare(void *memory, uint64_t size);
 
-  // These are tests we run if the API is not supported or permission is denied.
-  // All calls are expected to return zero/null, and output the expected result.
-  void (*null_tests)(ne_core_bool *is_success_out, uint64_t *result,
-                     uint64_t expected_result, void *user_data);
-
-  // These tests don't rely on the return value and therefore can be called
-  // during both full/null phases.
-  void (*shared_tests)(ne_core_bool *is_success_out, uint64_t *result,
-                       uint64_t expected_result, void *user_data);
-
-  void *user_data;
-};
+// This will attempt to test all non-null functions inside the stream interface.
+// When 'simulated_environment' is false:
+//  - Non-blocking operations only.
+//  - No specific data is expected to be read.
+// When 'simulated_environment' is true:
+//  - Non-blocking and blocking operations are performed.
+//  - A specific string TEST_CORE_SIMULATED_STREAM is expected to be read.
+void test_core_stream(ne_core_stream *stream,
+                      ne_core_bool free_stream,
+                      test_core_table *table);
 
 ne_core_bool test_core_run(test_core_table *functions);
 
-ne_core_bool test_core(void);
+ne_core_bool test_core(ne_core_bool simulated_environment);
 
-#define TEST_CORE_RUN(name)                                                    \
+#define TEST_CORE_RUN(library_supported, library_check_permission,             \
+                      library_request_permission)                              \
   test_core_table table;                                                       \
   table.user_data = NE_CORE_NULL;                                              \
-  table.full_tests = &name##_full_tests;                                       \
-  table.null_tests = &name##_null_tests;                                       \
-  table.shared_tests = &name##_shared_tests;                                   \
-  table.supported = name##_supported;                                          \
-  table.request_permission = name##_request_permission;                        \
-  table.version_linked_major = name##_version_linked_major;                    \
-  table.version_linked_minor = name##_version_linked_minor;                    \
-  table.version_header_major = name##_version_header_major;                    \
-  table.version_header_minor = name##_version_header_minor;                    \
+  table.full_tests = &_full_tests;                                             \
+  table.null_tests = &_null_tests;                                             \
+  table.shared_tests = &_shared_tests;                                         \
+  table.supported = library_supported;                                         \
+  table.check_permission = library_check_permission;                           \
+  table.request_permission = library_request_permission;                       \
+  table.simulated_environment = simulated_environment;                         \
+  table.expected_result = NE_CORE_RESULT_NOT_SET;                              \
+  table.is_final_run = NE_CORE_FALSE;                                          \
+  table.result = NE_CORE_NULL;                                                 \
+  table.success = NE_CORE_TRUE;                                                \
   return test_core_run(&table)
 
-#define TEST_CORE_EXPECT(name, expression)                                     \
-  (*is_success_out &=                                                          \
-   test_core_validate((expression), "In '" name "' expected '" #expression     \
-                                    "' to be true.\n"))
+#define TEST_CORE_EXPECT(expression)                                           \
+  NE_CORE_ENCLOSURE(table->success &=                                          \
+                    test_core_validate((expression), __FILE__, __LINE__,       \
+                                       "TEST_CORE_EXPECT failed\n");)
 
 #define TEST_CORE_CLEAR_RESULT()                                               \
-  NE_CORE_ENCLOSURE(if (result) *result = ne_core_result_not_set;)
+  NE_CORE_ENCLOSURE(if (table->result) *table->result =                        \
+                        NE_CORE_RESULT_NOT_SET;);
 
-#define TEST_CORE_EXPECT_RESULT(name, expected_result)                         \
-  NE_CORE_ENCLOSURE(if (result) *is_success_out &= test_core_validate(         \
-                        *result == expected_result,                            \
-                        "In '" name "' expected result '" #expected_result     \
-                        "'.\n");)
-
-#define TEST_CORE_IGNORE_UNUSED_PARAMETERS()                                   \
-  (void)is_success_out;                                                        \
-  (void)result;                                                                \
-  (void)expected_result;                                                       \
-  (void)user_data
+#define TEST_CORE_EXPECT_RESULT(expected_result)                               \
+  NE_CORE_ENCLOSURE(if (table->result) table->success &= test_core_validate(   \
+                        *table->result == expected_result, __FILE__, __LINE__, \
+                        "TEST_CORE_EXPECT_RESULT failed\n");)
 
 #define TEST_CORE_DECLARE_PARAMETERS                                           \
   ne_core_bool *is_success_out, uint64_t *result, uint64_t expected_result,    \

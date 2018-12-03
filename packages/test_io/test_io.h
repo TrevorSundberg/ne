@@ -4,8 +4,6 @@
 #include "../test_core/test_core.h"
 NE_CORE_BEGIN
 
-NE_CORE_DECLARE_PACKAGE(test_io, 0, 0);
-
-ne_core_bool test_io(void);
+ne_core_bool test_io(ne_core_bool simulated_environment);
 
 NE_CORE_END

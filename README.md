@@ -132,12 +132,9 @@ For example using `npm` you can install the [Lua package](https://www.lua.org/ab
 npm install ne_lua
 ```
 
-A side goal of **ne** is to make programming in C and C++ as fun and easy as it is using frameworks like [Node.js](https://nodejs.org/). To do this, we recommend libraries always prefer relative include paths. This means not forcing a user to setup custom include directories. For example, if you write a `main.c` file, and then install a package like `ne_lua`, it will create a directory called `ne_lua` with the `.ne` library and all the Lua headers. Lua headers only include each other using relative includes (for example `lapi.h` in Lua uses `#include "lstate.h"`), which means you can avoid setting up custom include paths and just write:
-```C
-#include "ne_lua/lua.h"
-```
+A side goal of **ne** is to make programming in C and C++ as fun and easy as it is using frameworks like [Node.js](https://nodejs.org/). To do this, we recommend libraries always prefer relative include paths. This means not forcing a user to setup custom include directories. For example, if you write a `main.c` file, and then install a package like `ne_lua`, it will create a directory called `ne_lua` with the `.ne` library and all the Lua headers. Lua headers only include each other using relative includes (for example `lapi.h` in Lua includes `"lstate.h"`), which means you can avoid setting up custom include paths and just write include `"ne_lua/lua.h"`.
 
-Unfortunately not all C libraries work this way. For example [FreeType](https://www.freetype.org/index.html) includes its own files using angle brackets such as `#include <ft2build.h>`, and also does not include files within the same directory using relative paths. This means that the user is forced to setup custom include paths. That said, FreeType is still a great library!
+Unfortunately not all C libraries work this way. For example [FreeType](https://www.freetype.org/index.html) includes its own files using angle brackets such as including `<ft2build.h>`, and also does not include files within the same directory using relative paths. This means that the user is forced to setup custom include paths. That said, FreeType is still a great library!
 
 **We encourage those uploading packages to revise the includes to be relative and as flat as possible.**
 

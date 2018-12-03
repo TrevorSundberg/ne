@@ -1,4 +1,7 @@
 {
   "files.associations": {},
-  "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"
+  "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
+  "files.eol": "\n",
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false
 }

@@ -2,12 +2,15 @@
 #include "../test/test.h"
 NE_CORE_BEGIN
 
-NE_CORE_DEFINE_PACKAGE(test);
+int32_t ne_core_main(int32_t argc, char *argv[])
+{
+  ne_core_bool simulated_environment =
+      argc == 2 &&
+      test_core_string_compare(argv[1], "--simulated_environment") == 0;
 
-int32_t ne_core_main(int32_t argc, char *argv[]) {
   ne_core_bool result = NE_CORE_TRUE;
-  result &= test_core();
-  result &= test_io();
+  result &= test_core(simulated_environment);
+  result &= test_io(simulated_environment);
 
   // We want to return 0 for success, and 1 for error.
   return (int32_t)!result;

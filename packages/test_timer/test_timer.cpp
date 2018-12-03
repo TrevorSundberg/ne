@@ -17,21 +17,21 @@ static void ne_timer_full_tests(ne_core_bool *is_success_out, uint64_t *result,
   TEST_CLEAR_RESULT();
   TEST_EXPECT("ne_timer_frequency",
               ne_timer_frequency(result, timer_count) == 0);
-  TEST_EXPECT_RESULT("ne_timer_frequency", ne_core_result_invalid_parameter);
+  TEST_EXPECT_RESULT("ne_timer_frequency", NE_CORE_RESULT_INVALID_PARAMETER);
 
   TEST_CLEAR_RESULT();
   TEST_EXPECT("ne_timer_frequency",
               ne_timer_frequency(result, 0xFFFFFFFFFFFFFFFF) == 0);
-  TEST_EXPECT_RESULT("ne_timer_frequency", ne_core_result_invalid_parameter);
+  TEST_EXPECT_RESULT("ne_timer_frequency", NE_CORE_RESULT_INVALID_PARAMETER);
 
   TEST_CLEAR_RESULT();
   TEST_EXPECT("ne_timer_ticks", ne_timer_ticks(result, timer_count) == 0);
-  TEST_EXPECT_RESULT("ne_timer_ticks", ne_core_result_invalid_parameter);
+  TEST_EXPECT_RESULT("ne_timer_ticks", NE_CORE_RESULT_INVALID_PARAMETER);
 
   TEST_CLEAR_RESULT();
   TEST_EXPECT("ne_timer_ticks",
               ne_timer_ticks(result, 0xFFFFFFFFFFFFFFFF) == 0);
-  TEST_EXPECT_RESULT("ne_timer_ticks", ne_core_result_invalid_parameter);
+  TEST_EXPECT_RESULT("ne_timer_ticks", NE_CORE_RESULT_INVALID_PARAMETER);
 
   uint64_t last_frequency = 0xFFFFFFFFFFFFFFFF;
 
@@ -68,11 +68,11 @@ static void ne_timer_null_tests(ne_core_bool *is_success_out, uint64_t *result,
 
   TEST_CLEAR_RESULT();
   TEST_EXPECT("ne_timer_frequency", ne_timer_frequency(result, 0) == 0);
-  TEST_EXPECT_RESULT("ne_timer_frequency", ne_core_result_invalid_parameter);
+  TEST_EXPECT_RESULT("ne_timer_frequency", NE_CORE_RESULT_INVALID_PARAMETER);
 
   TEST_CLEAR_RESULT();
   TEST_EXPECT("ne_timer_ticks", ne_timer_ticks(result, 0) == 0);
-  TEST_EXPECT_RESULT("ne_timer_ticks", ne_core_result_invalid_parameter);
+  TEST_EXPECT_RESULT("ne_timer_ticks", NE_CORE_RESULT_INVALID_PARAMETER);
 }
 
 static void ne_timer_shared_tests(ne_core_bool *is_success_out,

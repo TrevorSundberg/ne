@@ -1,0 +1,24 @@
+{
+  "name": "ne",
+  "version": "0.0.0",
+  "description": "Compile once against a well documented cross platform API and run your program on any platform.",
+  "main": "build.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TrevorSundberg/ne.git"
+  },
+  "keywords": [
+    "native",
+    "compile",
+    "cross-platform"
+  ],
+  "author": "Trevor Sundberg",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TrevorSundberg/ne/issues"
+  },
+  "homepage": "https://github.com/TrevorSundberg/ne#readme"
+}

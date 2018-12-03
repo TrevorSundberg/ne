@@ -2,71 +2,116 @@
 #include "../ne_core/ne_core.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#if defined(NE_CORE_PLATFORM_WINDOWS)
+#define NE_CORE_SUPPORTED
+#endif
+
 NE_CORE_BEGIN
 
-NE_CORE_DEFINE_PACKAGE(ne_core);
+/******************************************************************************/
+static ne_core_event_callback _event_callback;
+static const void *_event_user_data;
 
 /******************************************************************************/
-static void _ne_core_hello_world(uint64_t *result) {
+static ne_core_bool _ne_core_supported(uint64_t *result)
+{
+  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
+#if defined(NE_CORE_SUPPORTED)
+  return NE_CORE_TRUE;
+#else
+  return NE_CORE_FALSE;
+#endif
+}
+ne_core_bool (*ne_core_supported)(uint64_t *result) = &_ne_core_supported;
+
+/******************************************************************************/
+static void _ne_core_hello_world(uint64_t *result)
+{
   printf("Hello world!\n");
-  NE_CORE_RESULT(ne_core_result_success);
+  fflush(stdout);
+  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 }
 void (*ne_core_hello_world)(uint64_t *result) = &_ne_core_hello_world;
 
 /******************************************************************************/
-static void _ne_core_main_loop(uint64_t *result,
-                               ne_core_main_loop_callback callback,
-                               void *user_data) {
-
-  static ne_core_bool called = 0;
-  if (called) {
-    NE_CORE_RESULT(ne_core_result_error);
-    return;
-  }
-  called = NE_CORE_TRUE;
-
-  NE_CORE_RESULT(ne_core_result_success);
-
-  for (;;)
-    callback(user_data);
-}
-void (*ne_core_main_loop)(uint64_t *result, ne_core_main_loop_callback callback,
-                          void *user_data) = &_ne_core_main_loop;
-
-/******************************************************************************/
-static void _ne_core_exit(uint64_t *result, int32_t return_code) {
+static void _ne_core_exit(uint64_t *result, int32_t return_code)
+{
   exit(return_code);
-  NE_CORE_RESULT(ne_core_result_success);
+  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 }
 void (*ne_core_exit)(uint64_t *result, int32_t return_code) = &_ne_core_exit;
 
 /******************************************************************************/
-static void _ne_core_error(uint64_t *result, const char *message) {
-  fputs(message, stderr);
-  NE_CORE_RESULT(ne_core_result_success);
+static void _ne_core_error(uint64_t *result,
+                           const char *file,
+                           int64_t line,
+                           const char *message)
+{
+  fprintf(stderr, "\n%s(%lld): %s\n", file, (long long)line, message);
+  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 }
-void (*ne_core_error)(uint64_t *result, const char *message) = &_ne_core_error;
+void (*ne_core_error)(uint64_t *result,
+                      const char *file,
+                      int64_t line,
+                      const char *message) = &_ne_core_error;
 
 /******************************************************************************/
-static uint8_t *_ne_core_allocate(uint64_t *result, uint64_t sizeBytes) {
+static uint8_t *_ne_core_allocate(uint64_t *result, uint64_t sizeBytes)
+{
   uint8_t *memory = (uint8_t *)malloc((size_t)sizeBytes);
-  NE_CORE_RESULT(memory ? ne_core_result_success
-                        : ne_core_result_allocation_failed);
+  NE_CORE_RESULT(memory ? NE_CORE_RESULT_SUCCESS
+                        : NE_CORE_RESULT_ALLOCATION_FAILED);
   return memory;
 }
 uint8_t *(*ne_core_allocate)(uint64_t *result,
                              uint64_t sizeBytes) = &_ne_core_allocate;
 
 /******************************************************************************/
-static void _ne_core_free(uint64_t *result, void *memory) {
+static void _ne_core_free(uint64_t *result, void *memory)
+{
   free(memory);
-  NE_CORE_RESULT(ne_core_result_success);
+  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 }
 void (*ne_core_free)(uint64_t *result, void *memory) = &_ne_core_free;
 
 /******************************************************************************/
-int32_t main(int32_t argc, char *argv[]) {
-  return ne_core_main((int32_t)argc, argv);
+static void _ne_core_set_event_callback(uint64_t *result,
+                                        ne_core_event_callback callback,
+                                        const void *user_data)
+{
+  _event_callback = callback;
+  _event_user_data = user_data;
+  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
+}
+void (*ne_core_set_event_callback)(uint64_t *result,
+                                   ne_core_event_callback callback,
+                                   const void *user_data) =
+    &_ne_core_set_event_callback;
+
+/******************************************************************************/
+static void _ne_core_get_event_callback(uint64_t *result,
+                                        ne_core_event_callback *callback,
+                                        const void **user_data)
+{
+  *callback = _event_callback;
+  *user_data = _event_user_data;
+  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
+}
+void (*ne_core_get_event_callback)(uint64_t *result,
+                                   ne_core_event_callback *callback,
+                                   const void **user_data) =
+    &_ne_core_get_event_callback;
+
+/******************************************************************************/
+int32_t main(int32_t argc, char *argv[])
+{
+  int32_t result = ne_core_main(argc, argv);
+
+  while (_event_callback)
+    _event_callback(0, _event_user_data);
+
+  return result;
 }
 
 NE_CORE_END

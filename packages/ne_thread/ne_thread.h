@@ -12,7 +12,7 @@ typedef struct ne_thread ne_thread;
 typedef int64_t (*ne_thread_routine)(void *);
 
 // Pass in null to get the first thread.
-//    ne_core_result_invalid_parameter:
+//    NE_CORE_RESULT_INVALID_PARAMETER:
 //      Parameter 'current' does not point to a valid thread.
 NE_CORE_API ne_thread *(*ne_thread_enumerate_next)(uint64_t *result,
                                               ne_thread *current);
@@ -26,7 +26,7 @@ static const ne_thread_mode ne_thread_mode_resume = 0;
 static const ne_thread_mode ne_thread_mode_suspend = 1;
 static const ne_thread_mode ne_thread_mode_count = 2;
 
-//    ne_core_result_invalid_parameter:
+//    NE_CORE_RESULT_INVALID_PARAMETER:
 //      Parameter 'routine' is null or does not point at a valid function.
 NE_CORE_API ne_thread *(*ne_thread_create)(uint64_t *result,
                                       ne_thread_routine routine, void *data,
@@ -83,7 +83,7 @@ NE_CORE_API ne_thread_mutex *(*ne_thread_mutex_create)(uint64_t *result);
 // Always returns 'ne_core_true' when it aquires a lock.
 // If the mutex is already locked by the same calling thread,
 // this will immediately return 'ne_core_false'.
-//    ne_core_result_invalid_parameter:
+//    NE_CORE_RESULT_INVALID_PARAMETER:
 //      The pointer did not point to a valid mutex.
 NE_CORE_API ne_core_bool (*ne_thread_mutex_lock)(uint64_t *result,
                                             ne_thread_mutex *mutex,
@@ -91,7 +91,7 @@ NE_CORE_API ne_core_bool (*ne_thread_mutex_lock)(uint64_t *result,
 
 //    ne_thread_result_mutex_locked:
 //      The mutex was locked by another thread.
-//    ne_core_result_invalid_parameter:
+//    NE_CORE_RESULT_INVALID_PARAMETER:
 //      The pointer did not point to a valid mutex.
 NE_CORE_API void (*ne_thread_mutex_unlock)(uint64_t *result, ne_thread_mutex *mutex);
 
@@ -99,7 +99,7 @@ NE_CORE_API void (*ne_thread_mutex_unlock)(uint64_t *result, ne_thread_mutex *mu
 // resource. Once a mutex is freed the pointer becomes invalid.
 //    ne_thread_result_mutex_locked:
 //      The mutex was locked by another thread.
-//    ne_core_result_invalid_parameter:
+//    NE_CORE_RESULT_INVALID_PARAMETER:
 //      The pointer did not point to a valid mutex.
 NE_CORE_API void (*ne_thread_mutex_free)(uint64_t *result, ne_thread_mutex *mutex);
 
@@ -114,13 +114,13 @@ NE_CORE_API void (*ne_thread_event_create)(uint64_t *result, ne_core_bool signal
                                       ne_core_bool auto_reset);
 
 // Setting an automatic reset event to 'ne_core_false' has no effect.
-//    ne_core_result_invalid_parameter:
+//    NE_CORE_RESULT_INVALID_PARAMETER:
 //      The pointer did not point to a valid event.
 NE_CORE_API void (*ne_thread_event_set_signalled)(uint64_t *result,
                                              ne_thread_event *event,
                                              ne_core_bool signaled);
 
-//    ne_core_result_invalid_parameter:
+//    NE_CORE_RESULT_INVALID_PARAMETER:
 //      The pointer did not point to a valid event.
 NE_CORE_API void (*ne_thread_event_free)(uint64_t *result, ne_thread_event *event);
 

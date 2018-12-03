@@ -16,7 +16,7 @@ NE_CORE_API uint64_t (*ne_timer_count)(uint64_t *result);
 // At the start of the application the ticks will be will be 0.
 // The valid timer index is from [0, ne_timer_count), ordered from highest to
 // lowest frequency.
-//    ne_core_result_invalid_parameter:
+//    NE_CORE_RESULT_INVALID_PARAMETER:
 //      The timer provided was greater or equal to the value returned from
 //      'ne_timer_count'.
 NE_CORE_API uint64_t (*ne_timer_ticks)(uint64_t *result, uint64_t timer);
@@ -24,7 +24,7 @@ NE_CORE_API uint64_t (*ne_timer_ticks)(uint64_t *result, uint64_t timer);
 // Get the frequency of a specific timer (how many ticks per second, non-zero).
 // The valid timer index is from [0, ne_timer_count), ordered from highest to
 // lowest frequency.
-//    ne_core_result_invalid_parameter:
+//    NE_CORE_RESULT_INVALID_PARAMETER:
 //      The timer provided was greater or equal to the value returned from
 //      'ne_timer_count'.
 NE_CORE_API uint64_t (*ne_timer_frequency)(uint64_t *result, uint64_t timer);
