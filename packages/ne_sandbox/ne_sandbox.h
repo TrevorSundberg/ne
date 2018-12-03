@@ -1,7 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
-NE_CORE_BEGIN
 
 NE_CORE_DECLARE_PACKAGE(ne_sandbox, 0, 0);
 
@@ -41,15 +40,15 @@ NE_CORE_API const char *(*ne_sandbox_platform)(uint64_t *result);
 // Comunicate a custom message with the sandbox.
 // This function is entirely sandbox defined and has no explicit behavior.
 // The return value is also sandbox defined.
-NE_CORE_API uint64_t (*ne_sandbox_communicate)(uint64_t *result, void *buffer,
-                                          uint64_t size);
+NE_CORE_API uint64_t (*ne_sandbox_communicate)(uint64_t *result,
+                                               void *buffer,
+                                               uint64_t size);
 
 // Signal a message to the sandbox application.
 NE_CORE_API void (*ne_sandbox_message)(uint64_t *result, const char *message);
 
 // Terminates the application at the current location. The code and the message
 // are optional.
-NE_CORE_API void (*ne_sandbox_terminate)(uint64_t *result, uint64_t code,
-                                    const char *message);
-
-NE_CORE_END
+NE_CORE_API void (*ne_sandbox_terminate)(uint64_t *result,
+                                         uint64_t code,
+                                         const char *message);

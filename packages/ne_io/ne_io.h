@@ -2,8 +2,6 @@
 #pragma once
 #include "../ne_core/ne_core.h"
 
-NE_CORE_BEGIN
-
 #define NE_IO_MAJOR 0
 #define NE_IO_MINOR 0
 
@@ -31,5 +29,3 @@ NE_CORE_API void (*ne_io_get_output)(uint64_t *result,
 // Must only support: write, flush, free.
 NE_CORE_API void (*ne_io_get_error)(uint64_t *result,
                                     ne_core_stream *stream_out);
-
-NE_CORE_END

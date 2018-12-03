@@ -1,7 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
-NE_CORE_BEGIN
 
 NE_CORE_DECLARE_PACKAGE(ne_timer, 0, 0);
 
@@ -28,5 +27,3 @@ NE_CORE_API uint64_t (*ne_timer_ticks)(uint64_t *result, uint64_t timer);
 //      The timer provided was greater or equal to the value returned from
 //      'ne_timer_count'.
 NE_CORE_API uint64_t (*ne_timer_frequency)(uint64_t *result, uint64_t timer);
-
-NE_CORE_END

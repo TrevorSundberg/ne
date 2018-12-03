@@ -28,9 +28,6 @@
 //#include "../test_port/test_port.h"
 //#include "../test_print/test_print.h"
 //#include "../test_window/test_window.h"
-NE_CORE_BEGIN
 
 // Runs all the tests for all standard ne-libraries.
 int32_t ne_core_main(int32_t argc, char *argv[]);
-
-NE_CORE_END

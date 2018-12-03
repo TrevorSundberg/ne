@@ -1,6 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test_timer/test_timer.h"
-NE_CORE_BEGIN
+
 
 NE_CORE_DEFINE_PACKAGE(test_timer);
 
@@ -83,4 +83,4 @@ static void ne_timer_shared_tests(ne_core_bool *is_success_out,
 
 ne_core_bool test_timer() { TEST_RUN(ne_timer); }
 
-NE_CORE_END
+

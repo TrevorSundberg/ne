@@ -1,7 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
-NE_CORE_BEGIN
 
 NE_CORE_DECLARE_PACKAGE(ne_display, 0, 0);
 
@@ -48,5 +47,3 @@ static const ne_window_state ne_window_state_fullscreen_display = 3;
 NE_CORE_API ne_window_state (*ne_window_get_state)(uint64_t *result);
 NE_CORE_API void (*ne_window_set_state)(uint64_t *result,
                                         ne_window_state state);
-
-NE_CORE_END

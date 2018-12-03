@@ -1,7 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
-NE_CORE_BEGIN
 
 NE_CORE_DECLARE_PACKAGE(ne_package, 0, 0);
 
@@ -76,5 +75,3 @@ NE_CORE_API void (*ne_package_symbol_enumerator)(
     uint64_t *result, ne_core_enumerator *enumerator_out);
 
 NE_CORE_API void (*ne_package_close)(uint64_t *result, ne_package *package);
-
-NE_CORE_END

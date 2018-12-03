@@ -7,8 +7,6 @@
 #define NE_CORE_SUPPORTED
 #endif
 
-NE_CORE_BEGIN
-
 /******************************************************************************/
 static ne_core_event_callback _event_callback;
 static const void *_event_user_data;
@@ -114,4 +112,3 @@ int32_t main(int32_t argc, char *argv[])
   return result;
 }
 
-NE_CORE_END

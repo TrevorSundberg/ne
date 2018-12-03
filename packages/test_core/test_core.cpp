@@ -1,6 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test_core/test_core.h"
-NE_CORE_BEGIN
+
 
 #define TEST_CORE_RANDOM_A 1103515245
 #define TEST_CORE_RANDOM_C 12345
@@ -630,4 +630,4 @@ ne_core_bool test_core(ne_core_bool simulated_environment)
   TEST_CORE_RUN(ne_core_supported, NE_CORE_NULL, NE_CORE_NULL);
 }
 
-NE_CORE_END
+

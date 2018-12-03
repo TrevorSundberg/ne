@@ -1,7 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
-NE_CORE_BEGIN
 
 NE_CORE_DECLARE_PACKAGE(ne_power, 0, 0);
 
@@ -12,7 +11,6 @@ static const ne_power_state ne_power_state_charging = 2;
 static const ne_power_state ne_power_state_charged = 3;
 static const ne_power_state ne_power_state_count = 4;
 
-NE_CORE_API ne_power_state (*ne_power_get_state)(uint64_t *result, int64_t *seconds,
-                                            int64_t *percent);
-
-NE_CORE_END
+NE_CORE_API ne_power_state (*ne_power_get_state)(uint64_t *result,
+                                                 int64_t *seconds,
+                                                 int64_t *percent);

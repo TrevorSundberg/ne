@@ -1,6 +1,5 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test/test.h"
-NE_CORE_BEGIN
 
 int32_t ne_core_main(int32_t argc, char *argv[])
 {
@@ -15,5 +14,3 @@ int32_t ne_core_main(int32_t argc, char *argv[])
   // We want to return 0 for success, and 1 for error.
   return (int32_t)!result;
 }
-
-NE_CORE_END

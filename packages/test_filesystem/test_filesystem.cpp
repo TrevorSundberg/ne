@@ -1,6 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test_filesystem/test_filesystem.h"
-NE_CORE_BEGIN
+
 
 /*
 // Test writing to a file multiple times.
@@ -95,4 +95,3 @@ static void ne_filesystem_shared_tests(ne_core_bool *is_success_out,
 ne_core_bool test_filesystem() { TEST_RUN(ne_filesystem); }
 
 */
-NE_CORE_END

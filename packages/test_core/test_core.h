@@ -2,7 +2,6 @@
 #pragma once
 #include "../ne_core/ne_core.h"
 #include "../ne_core/ne_intrinsic.h"
-NE_CORE_BEGIN
 
 #define TEST_CORE_SIMULATED_STREAM "<This is a test>"
 #define TEST_CORE_SIMULATED_SIZE (sizeof(TEST_CORE_SIMULATED_STREAM) - 1)
@@ -113,5 +112,3 @@ ne_core_bool test_core(ne_core_bool simulated_environment);
 
 #define TEST_CORE_PASS_PARAMETERS                                              \
   is_success_out, result, expected_result, user_data
-
-NE_CORE_END

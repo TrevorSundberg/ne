@@ -1,7 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
-NE_CORE_BEGIN
 
 NE_CORE_DECLARE_PACKAGE(ne_mouse, 0, 0);
 
@@ -20,10 +19,9 @@ static const ne_mouse_index ne_mouse_index_count = 5;
 // Returning 'ne_core_true' means the button is down and 'ne_core_false' means
 // up. This represents the physical mouse, which means it may change independent
 // of any application focus.
-NE_CORE_API ne_core_bool (*ne_mouse_is_down)(uint64_t *result, ne_mouse_index index);
+NE_CORE_API ne_core_bool (*ne_mouse_is_down)(uint64_t *result,
+                                             ne_mouse_index index);
 
 NE_CORE_API void (*ne_mouse_get_position_screen)(uint64_t *result,
-                                            int64_t *screen_x_out,
-                                            int64_t *screen_y_out);
-
-NE_CORE_END
+                                                 int64_t *screen_x_out,
+                                                 int64_t *screen_y_out);

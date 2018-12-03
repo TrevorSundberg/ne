@@ -2,8 +2,6 @@
 #pragma once
 #include "../ne_core/ne_core.h"
 
-NE_CORE_BEGIN
-
 #define NE_FILESYSTEM_MAJOR 0
 #define NE_FILESYSTEM_MINOR 0
 #define NE_FILESYSTEM_PERMISSION 0x9f96d1ab5ae25942
@@ -227,4 +225,3 @@ struct ne_filesystem_dialog_config
 NE_CORE_API const char *(*ne_filesystem_dialog)(
     uint64_t *result, const ne_filesystem_dialog_config *config);
 
-NE_CORE_END

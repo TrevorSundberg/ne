@@ -1,7 +1,7 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
-NE_CORE_BEGIN
+
 
 NE_CORE_DECLARE_PACKAGE(ne_window, 0, 0);
 
@@ -90,4 +90,4 @@ NE_CORE_API void (*ne_window_set_opacity)(uint64_t *result, float opacity);
 NE_CORE_API float (*ne_window_get_progress)(uint64_t *result);
 NE_CORE_API void (*ne_window_set_progress)(uint64_t *result, float progress);
 
-NE_CORE_END
+

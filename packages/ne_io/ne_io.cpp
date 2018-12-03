@@ -19,8 +19,6 @@ struct _input_opaque
 #define NE_IO_SUPPORTED
 #endif
 
-NE_CORE_BEGIN
-
 /******************************************************************************/
 static ne_core_bool _ne_io_supported(uint64_t *result)
 {
@@ -378,10 +376,10 @@ static void _output_free(uint64_t *result, ne_core_stream *stream)
 
 /******************************************************************************/
 static uint64_t _error_write(uint64_t *result,
-                              ne_core_stream *stream,
-                              const void *buffer,
-                              uint64_t size,
-                              ne_core_bool allow_blocking)
+                             ne_core_stream *stream,
+                             const void *buffer,
+                             uint64_t size,
+                             ne_core_bool allow_blocking)
 {
   return _outgoing_write(result, stream, buffer, size, allow_blocking,
                          NE_IO_ERROR);
@@ -430,5 +428,3 @@ void _ne_io_get_error(uint64_t *result, ne_core_stream *stream_out)
 }
 void (*ne_io_get_error)(uint64_t *result,
                         ne_core_stream *stream_out) = &_ne_io_get_error;
-
-NE_CORE_END

@@ -1,6 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test_io/test_io.h"
-NE_CORE_BEGIN
+
 
 static void _full_tests(test_core_table *table)
 {
@@ -90,4 +90,4 @@ ne_core_bool test_io(ne_core_bool simulated_environment)
   TEST_CORE_RUN(ne_io_supported, NE_CORE_NULL, NE_CORE_NULL);
 }
 
-NE_CORE_END
+

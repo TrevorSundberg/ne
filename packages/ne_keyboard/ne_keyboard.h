@@ -1,7 +1,6 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
-NE_CORE_BEGIN
 
 NE_CORE_DECLARE_PACKAGE(ne_keyboard, 0, 0);
 
@@ -17,6 +16,4 @@ static const ne_keyboard_index ne_keyboard_index_count = 3;
 // This represents the physical keyboard, which means it may change
 // independent of any application focus.
 NE_CORE_API ne_core_bool (*ne_keyboard_is_down)(uint64_t *result,
-                                           ne_keyboard_index index);
-
-NE_CORE_END
+                                                ne_keyboard_index index);

@@ -4,19 +4,11 @@
 #pragma once
 
 #if defined(__cplusplus)
-/// If compiled under C++, this will extern all functions as C linkage.
-#define NE_CORE_BEGIN                                                          \
-  extern "C"                                                                   \
-  {
-/// If compiled under C++, this ends C linkage. Must come after #NE_CORE_BEGIN.
-#define NE_CORE_END }
 #define NE_CORE_ENUM : uint32_t
+#define NE_CORE_C_LINKAGE "C"
 #else
-/// If compiled under C++, this will extern all functions as C linkage.
-#define NE_CORE_BEGIN
-/// If compiled under C++, this ends C linkage. Must come after #NE_CORE_BEGIN.
-#define NE_CORE_END
 #define NE_CORE_ENUM
+#define NE_CORE_C_LINKAGE
 #endif
 
 // This should always be defined by the build system, however
@@ -38,7 +30,7 @@
 // NE_CORE_PLATFORM_NE).
 /// Declares external linkage with a special type of linking that means
 /// an *invalid* dummy will be stubbed in if it is not found/linked.
-#define NE_CORE_API extern __attribute__((section("ne")))
+#define NE_CORE_API extern NE_CORE_C_LINKAGE __attribute__((section("ne")))
 
 // Since we're compiling through LLVM / Clang with a specified data-layout
 // then we know the exact sizes of the following types.
@@ -70,7 +62,7 @@ typedef unsigned long long uintptr_t;
 #else
 /// Declares external linkage with a special type of linking that means
 /// an *invalid* dummy will be stubbed in if it is not found/linked.
-#define NE_CORE_API extern
+#define NE_CORE_API extern NE_CORE_C_LINKAGE
 
 // If we're not compiling with NE_CORE_PLATFORM_NE defined, it means we may be
 // on any compiler and we are most likely compiling with libc. Because of this,
@@ -128,8 +120,6 @@ typedef uint8_t ne_core_bool;
 
 /// Sets the `result` to a given code if it's available/non-null.
 #define NE_CORE_RESULT(code) NE_CORE_ENCLOSURE(if (result) *result = code;)
-
-NE_CORE_BEGIN
 
 // This header is considered tentative and is a work in progress. It contains
 // the API as well as notes about how the API should work. Some of these notes
@@ -250,7 +240,6 @@ NE_CORE_BEGIN
 
 // Ne APIS never abbreviate words and always use the whole word, for example
 // 'microphone' instead of 'mic', 'rectangle' instead of 'rect'...
-
 
 #define NE_CORE_MAJOR 0
 #define NE_CORE_MINOR 0
@@ -600,5 +589,3 @@ struct ne_core_stream
   // Opaque data used by the platform / implementation to represent the stream.
   uint8_t opaque[16];
 };
-
-NE_CORE_END
