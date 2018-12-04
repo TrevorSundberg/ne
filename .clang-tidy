@@ -1,11 +1,12 @@
 Checks: "*,\
+-clang-diagnostic-c++98-compat,\
+-clang-diagnostic-deprecated,\
+-clang-diagnostic-documentation-unknown-command,\
 -clang-diagnostic-unused-macros,\
--llvm-header-guard,\
 -cppcoreguidelines-no-malloc,\
 -cppcoreguidelines-owning-memory,\
--clang-diagnostic-c++98-compat,\
 -hicpp-no-malloc,\
+-llvm-header-guard,\
 -modernize-use-using,\
--clang-diagnostic-documentation-unknown-command,\
 "
 AnalyzeTemporaryDtors: true
