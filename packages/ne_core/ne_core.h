@@ -1,13 +1,18 @@
 /// @file
-/// @license MIT License Copyright (c) 2018 Trevor Sundberg
+/// @see LICENSE.md MIT License Copyright (c) 2018 Trevor Sundberg
 
 #pragma once
 
 #if defined(__cplusplus)
+/// Enums must be 32-bit size in C++.
 #define NE_CORE_ENUM : uint32_t
+/// Use C name mangling.
 #define NE_CORE_C_LINKAGE "C"
 #else
+/// We can't force enum sizes, so we make an enum constant called 'force_size'
+/// that is as big as a 32-bit number.
 #define NE_CORE_ENUM
+/// We're already in C, so we use C name mangling.
 #define NE_CORE_C_LINKAGE
 #endif
 
@@ -67,7 +72,23 @@ typedef unsigned long long uintptr_t;
 // If we're not compiling with NE_CORE_PLATFORM_NE defined, it means we may be
 // on any compiler and we are most likely compiling with libc. Because of this,
 // we must rely on each compilers definition of sized types.
+#if defined(__cplusplus)
+#include <cstdint>
+typedef std::int8_t int8_t;
+typedef std::int16_t int16_t;
+typedef std::int32_t int32_t;
+typedef std::int64_t int64_t;
+typedef std::intmax_t intmax_t;
+typedef std::intptr_t intptr_t;
+typedef std::uint8_t uint8_t;
+typedef std::uint16_t uint16_t;
+typedef std::uint32_t uint32_t;
+typedef std::uint64_t uint64_t;
+typedef std::uintmax_t uintmax_t;
+typedef std::uintptr_t uintptr_t;
+#else
 #include <stdint.h>
+#endif
 #endif
 
 /// A boolean value that may hold NE_CORE_TRUE or NE_CORE_FALSE. All other
@@ -241,37 +262,42 @@ typedef uint8_t ne_core_bool;
 // Ne APIS never abbreviate words and always use the whole word, for example
 // 'microphone' instead of 'mic', 'rectangle' instead of 'rect'...
 
+/// Major version of the library (bumped for breaking changes).
 #define NE_CORE_MAJOR 0
+/// Minor version of the library (bumped for added features).
 #define NE_CORE_MINOR 0
 
 // The following are tags and are only used for documentation purposes:
 
 /// Memory returned is owned by the platform/host. The next call to the
 /// same function will free or re-use the previously returned memory.
-struct ne_core_tag_host_owned;
+typedef struct ne_core_tag_host_owned ne_core_tag_host_owned;
 
 /// Memory returned is owned by the user. The user must call 'ne_core_free' on
 /// the returned memory.
-struct ne_core_tag_user_owned;
+typedef struct ne_core_tag_user_owned ne_core_tag_user_owned;
 
 /// This function may be called by the user, but must be called by the
 /// platform internally. If the function pointer is replaced, it is undefined
 /// behavior to call any other ne function at that time as the platform may
 /// not expect it.
-struct ne_core_tag_internally_called;
+typedef struct ne_core_tag_internally_called ne_core_tag_internally_called;
 
 /// Null is considered a valid value for the corresponding pointer.
-struct ne_core_tag_nullable;
+typedef struct ne_core_tag_nullable ne_core_tag_nullable;
 
 /// The function must only be called from the main thread.
 /// When applied to a callback, this means the callback will always occur on the
 /// main thread.
-struct ne_core_tag_main_thread_only;
+typedef struct ne_core_tag_main_thread_only ne_core_tag_main_thread_only;
 
 /// The first call to be made in an ne application.
 /// Static initialization in llvm will occur before this call.
 /// When relying on libc, 'main' will be invoked at this time.
 /// See #ne_core_set_event_callback to understand program termination.
+/// @param argc The number of parameters passed.
+/// @param argv An array with each paramter passed in.
+/// @return An arbitrary process return code (0 indicates success).
 extern int32_t ne_core_main(int32_t argc, char *argv[]);
 
 // Each result code should be a randomly generated uint64_t to avoid collisions.
@@ -303,17 +329,28 @@ extern int32_t ne_core_main(int32_t argc, char *argv[]);
 
 /// Determines if the package is fully supported on this platform.
 /// @param result
-///   NE_CORE_RESULT_SUCCESS:
+///   #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
 /// @return #NE_CORE_TRUE if supported, #NE_CORE_FALSE otherwise.
 NE_CORE_API ne_core_bool (*ne_core_supported)(uint64_t *result);
 
+/// The state of a permission. Defaults to #ne_core_permission_state_prompt for
+/// all permissions.
 typedef enum ne_core_permission_state NE_CORE_ENUM
 {
+  /// The user has yet to be prompted for the permission (denied).
   ne_core_permission_state_prompt = 0,
+
+  /// The user or host explicitly granted permission.
   ne_core_permission_state_granted = 1,
+
+  /// The user or host explicitly denied permission.
   ne_core_permission_state_denied = 2,
-  ne_core_permission_state_count = 3,
+
+  /// Number of entries in the enum.
+  ne_core_permission_state_max = 3,
+
+  /// Force enums to be 32-bit.
   ne_core_permission_state_force_size = 0x7FFFFFFF
 } ne_core_permission_state;
 
@@ -321,9 +358,9 @@ typedef enum ne_core_permission_state NE_CORE_ENUM
 /// All package permissions will be denied by default unless they were
 /// previously granted or the manifest requires them.
 /// @param result
-///   NE_CORE_RESULT_SUCCESS:
+///   #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
-///   NE_CORE_RESULT_NOT_SUPPORTED:
+///   #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The tokens was not supported.
 /// @return NE_CORE_TRUE if granted, NE_CORE_FALSE if denied.
 NE_CORE_API ne_core_bool (*ne_core_check_permission)(uint64_t *result,
@@ -333,10 +370,11 @@ NE_CORE_API ne_core_bool (*ne_core_check_permission)(uint64_t *result,
 /// For each token the #NE_CORE_EVENT_PERMISSION_GRANTED or
 /// #NE_CORE_EVENT_PERMISSION_DENIED events will be sent.
 /// Permissions may be granted for some tokens and not others.
-/// If #ne_core_check_supported returned #NE_CORE_FALSE for a given token then
-/// it will always result in #NE_CORE_EVENT_PERMISSION_DENIED for that token.
+/// If the corresponding 'supported' call returned #NE_CORE_FALSE for a given
+/// token then it will always result in #NE_CORE_EVENT_PERMISSION_DENIED for
+/// that token.
 /// @param result
-///   NE_CORE_RESULT_SUCCESS:
+///   #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
 NE_CORE_API void (*ne_core_request_permission)(uint64_t *result,
                                                uint64_t permissions[],
@@ -393,28 +431,29 @@ NE_CORE_API void (*ne_core_request_frame_event)(uint64_t *result);
 /// Sent upon calling #ne_core_request_frame_event.
 #define NE_CORE_EVENT_FRAME 0xe3b309b47ac670a4
 
-// Terminates the program immediately. Flushes and closes any open streams.
-// Invokes global destructors.
+/// Terminates the program immediately. Flushes and closes any open streams.
+/// Invokes global destructors.
 NE_CORE_API void (*ne_core_exit)(uint64_t *result, int32_t return_code);
 
-// Signal an error to the application. This is mostly used for unit tests.
+/// Signal an error to the application. This is mostly used for unit tests.
 NE_CORE_API void (*ne_core_error)(uint64_t *result,
                                   const char *file,
                                   int64_t line,
                                   const char *message);
 
-//    #user-owned-memory
-//    @ne_memory_result_allocation_failed:
-//      Not enough system memory or address space, or other system error.
+/// Allocates memory from the host.
+/// Tags: #ne_core_tag_user_owned.
+/// @param result
+///    #NE_CORE_RESULT_ALLOCATION_FAILED:
+///      Not enough system memory or address space, or other system error.
 NE_CORE_API uint8_t *(*ne_core_allocate)(uint64_t *result, uint64_t sizeBytes);
 
-// Frees the memory (only should be memory returned from 'ne_memory_allocate').
+/// Frees memory that was returned from #ne_core_allocate.
 NE_CORE_API void (*ne_core_free)(uint64_t *result, void *memory);
 
 /// Forward declaration and alias.
 typedef struct ne_core_event ne_core_event;
-/// Represent an event that occurred at a specific #time. Events may be
-/// processed by calling #ne_core_event_peek and #ne_core_event_dequeue.
+/// Represent an event that occurred at a specific #time.
 struct ne_core_event
 {
   /// The type of an event is identified by a unique random integer.
@@ -506,10 +545,20 @@ struct ne_core_enumerator
 /// When seeking a stream the seek is always relative to a given origin.
 typedef enum ne_core_stream_seek_origin NE_CORE_ENUM
 {
+  /// Seek to an offset relative to the beginning of the stream.
+  /// Typically you will use positive values to move forwards.
   ne_core_stream_seek_origin_begin = 0,
+
+  /// Seek to an offset relative to the current position of the stream.
+  /// Typically you may use positive or negative values to move the posiiton.
   ne_core_stream_seek_origin_current = 1,
+
+  /// Seek to an offset relative to the end of the stream.
+  /// Typically you will use negative values to move backwards.
   ne_core_stream_seek_origin_end = 2,
-  ne_core_stream_seek_origin_count = 3,
+  /// Number of entries in the enum.
+  ne_core_stream_seek_origin_max = 3,
+  /// Force enums to be 32-bit.
   ne_core_stream_seek_origin_force_size = 0x7FFFFFFF
 } ne_core_stream_seek_origin;
 

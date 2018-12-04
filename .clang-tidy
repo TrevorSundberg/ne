@@ -1,7 +1,11 @@
-Checks: ''
-HeaderFilterRegex: ''
+Checks: "*,\
+-clang-diagnostic-unused-macros,\
+-llvm-header-guard,\
+-cppcoreguidelines-no-malloc,\
+-cppcoreguidelines-owning-memory,\
+-clang-diagnostic-c++98-compat,\
+-hicpp-no-malloc,\
+-modernize-use-using,\
+-clang-diagnostic-documentation-unknown-command,\
+"
 AnalyzeTemporaryDtors: true
-User: user
-CheckOptions:
-  - key: a
-    value: 0
