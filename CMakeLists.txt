@@ -22,18 +22,27 @@ add_executable(
   packages/ne_core/ne_core.cpp
   packages/ne_core/ne_intrinsic.h
   packages/ne_core/ne_intrinsic.cpp
-  packages/ne_io/ne_io.h
-  packages/ne_io/ne_io.cpp
-  packages/ne_filesystem/ne_filesystem.h
-  packages/ne_filesystem/ne_filesystem.cpp
   packages/test_core/test_core.h
-  packages/test_core/test_core.cpp
-  packages/test_io/test_io.h
-  packages/test_io/test_io.cpp
-  packages/test_filesystem/test_filesystem.h
-  packages/test_filesystem/test_filesystem.cpp
-  packages/test/test.h
-  packages/test/test.cpp)
+  packages/test_core/test_core.cpp)
+
+#add_executable(
+#  ne
+#  packages/ne_core/ne_core.h
+#  packages/ne_core/ne_core.cpp
+#  packages/ne_core/ne_intrinsic.h
+#  packages/ne_core/ne_intrinsic.cpp
+#  packages/ne_io/ne_io.h
+#  packages/ne_io/ne_io.cpp
+#  packages/ne_filesystem/ne_filesystem.h
+#  packages/ne_filesystem/ne_filesystem.cpp
+#  packages/test_core/test_core.h
+#  packages/test_core/test_core.cpp
+#  packages/test_io/test_io.h
+#  packages/test_io/test_io.cpp
+#  packages/test_filesystem/test_filesystem.h
+#  packages/test_filesystem/test_filesystem.cpp
+#  packages/test/test.h
+#  packages/test/test.cpp)
 
 #target_include_directories(ne directory...)
 #target_link_libraries(ne directory...)

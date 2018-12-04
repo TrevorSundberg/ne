@@ -7,34 +7,33 @@ const glob = require('glob');
 
 async function main()
 {
-  const stdioErrorOnly = ['ignore', 'ignore', 'inherit'];
-
   const rootDir = process.cwd();
-  const rootOptions = {
+
+  // Run eslint.
+  const eslintOptions = {
     cwd: rootDir,
-    stdio: stdioErrorOnly,
+    stdio: ['ignore', 'ignore', 'inherit'],
     reject: false
   };
+  await execa('node', ['node_modules/eslint/bin/eslint.js', '.'], eslintOptions);
 
-  await execa('node', ['node_modules/eslint/bin/eslint.js', '.'], rootOptions);
-
+  // Gather all .c, .cpp, and .h files.
   const packagesDir = path.join(rootDir, 'packages');
-
-  const sourceFiles = glob.sync('**/*.@(c|h|cpp)', {
+  const sourceFiles = glob.sync('**/*.@(c|cpp|h)', {
     cwd: packagesDir
   });
 
   // Run clang-tidy.
+  const clangTidyOptions = {
+    cwd: packagesDir,
+    stdio: ['ignore', 'pipe', 'ignore'],
+    reject: false
+  };
   for (const filePath of sourceFiles)
   {
     // Clang-tidy emits all the errors to the standard out.
     // We capture them and re-emit them to stderr.
-    const result = await execa('clang-tidy', [filePath], {
-      cwd: packagesDir,
-      stdio: ['ignore', 'pipe', 'ignore'],
-      reject: false
-    });
-
+    const result = await execa('clang-tidy', [filePath], clangTidyOptions);
     if (result.stdout)
     {
       console.error(result.stdout);
@@ -42,18 +41,19 @@ async function main()
   }
 
   // Run clang-format.
+  const clangFormatOptions = {
+    cwd: packagesDir,
+    stdio: ['ignore', 'pipe', 'ignore'],
+    reject: false,
+    stripFinalNewline: false,
+    stripEof: false
+  };
   for (const filePath of sourceFiles)
   {
     // Clang-format emits the formatted file to the output.
     // In this build script we want to emit errors if the user
     // did not auto-format their code, so we will perform a diff.
-    const result = await execa('clang-format', [filePath], {
-      cwd: packagesDir,
-      stdio: ['ignore', 'pipe', 'ignore'],
-      reject: false,
-      stripFinalNewline: false,
-      stripEof: false
-    });
+    const result = await execa('clang-format', [filePath], clangFormatOptions);
 
     const fullPath = path.join(packagesDir, filePath);
     const oldCode = fs.readFileSync(fullPath, {
@@ -67,16 +67,25 @@ async function main()
     }
   }
 
+  // Run doxygen.
+  const doxygenOptions = {
+    cwd: rootDir,
+    stdio: ['ignore', 'ignore', 'inherit'],
+    reject: false
+  };
+  await execa('doxygen', [], doxygenOptions);
+
+  // Run cmake.
   const buildDir = path.join(rootDir, 'build');
-  const buildOptions = {
+  const cmakeOptions = {
     cwd: buildDir,
-    stdio: stdioErrorOnly,
+    stdio: ['ignore', 'ignore', 'inherit'],
     reject: false
   };
   mkdirp.sync(buildDir, {
     recursive: true
   });
-  await execa('cmake', ['..'], buildOptions);
+  await execa('cmake', ['..'], cmakeOptions);
 
 }
 

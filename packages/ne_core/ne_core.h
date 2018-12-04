@@ -8,12 +8,16 @@
 #define NE_CORE_ENUM : uint32_t
 /// Use C name mangling.
 #define NE_CORE_C_LINKAGE "C"
+/// Indicates a null pointer.
+#define NE_CORE_NULL nullptr
 #else
 /// We can't force enum sizes, so we make an enum constant called 'force_size'
 /// that is as big as a 32-bit number.
 #define NE_CORE_ENUM
 /// We're already in C, so we use C name mangling.
 #define NE_CORE_C_LINKAGE
+/// Indicates a null pointer.
+#define NE_CORE_NULL 0
 #endif
 
 // This should always be defined by the build system, however
@@ -99,9 +103,6 @@ typedef uint8_t ne_core_bool;
 #define NE_CORE_TRUE 1
 /// Represents a boolean false value, to be used with #ne_core_bool.
 #define NE_CORE_FALSE 0
-
-/// Indicates a null pointer.
-#define NE_CORE_NULL 0
 
 // typedef uint64_t ne_core_primitive_type;
 // static const ne_core_primitive_type ne_core_primitive_type_int8 = 0;

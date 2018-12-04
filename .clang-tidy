@@ -1,10 +1,15 @@
 Checks: "*,\
+-clang-diagnostic-c++98-compat-pedantic,\
 -clang-diagnostic-c++98-compat,\
 -clang-diagnostic-deprecated,\
 -clang-diagnostic-documentation-unknown-command,\
 -clang-diagnostic-unused-macros,\
 -cppcoreguidelines-no-malloc,\
 -cppcoreguidelines-owning-memory,\
+-cppcoreguidelines-pro-bounds-array-to-pointer-decay,\
+-cppcoreguidelines-pro-bounds-pointer-arithmetic,\
+-cppcoreguidelines-pro-type-const-cast,\
+-hicpp-no-array-decay,\
 -hicpp-no-malloc,\
 -llvm-header-guard,\
 -modernize-use-using,\

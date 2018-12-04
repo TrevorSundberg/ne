@@ -71,7 +71,7 @@ void test_core_stream(ne_core_stream *stream,
                       ne_core_bool free_stream,
                       test_core_table *table);
 
-ne_core_bool test_core_run(test_core_table *functions);
+ne_core_bool test_core_run(test_core_table *table);
 
 ne_core_bool test_core(ne_core_bool simulated_environment);
 
@@ -103,8 +103,8 @@ ne_core_bool test_core(ne_core_bool simulated_environment);
 
 #define TEST_CORE_EXPECT_RESULT(expected_result)                               \
   NE_CORE_ENCLOSURE(if (table->result) table->success &= test_core_validate(   \
-                        *table->result == expected_result, __FILE__, __LINE__, \
-                        "TEST_CORE_EXPECT_RESULT failed\n");)
+                        *table->result == (expected_result), __FILE__,         \
+                        __LINE__, "TEST_CORE_EXPECT_RESULT failed\n");)
 
 #define TEST_CORE_DECLARE_PARAMETERS                                           \
   ne_core_bool *is_success_out, uint64_t *result, uint64_t expected_result,    \
