@@ -87,6 +87,11 @@ static void shared_tests(test_table *table)
   TEST_CLEAR_RESULT();
   ne_core_request_frame(table->result, &test_frame_callback, table);
   TEST_EXPECT_RESULT(table->expected_result);
+
+  // We can't test these functions or call them for coverage because doing so
+  // would cause the tests to fail (or exit prematurely).
+  TEST_EXPECT(ne_core_exit != nullptr);
+  TEST_EXPECT(ne_core_error != nullptr);
 }
 
 static void exit_tests(test_table *table)
