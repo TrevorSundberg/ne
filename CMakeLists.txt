@@ -22,6 +22,8 @@ add_executable(
   packages/ne_core/ne_core.cpp
   packages/ne_core/ne_intrinsic.h
   packages/ne_core/ne_intrinsic.cpp
+  packages/test/test.h
+  packages/test/test.cpp
   packages/test_core/test_core.h
   packages/test_core/test_core.cpp)
 

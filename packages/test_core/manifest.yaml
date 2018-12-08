@@ -2,3 +2,7 @@
     name: ne_core
     major: 0
     minor: 0
+- dependency:
+    name: test_core
+    major: 0
+    minor: 0
