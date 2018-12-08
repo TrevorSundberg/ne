@@ -36,6 +36,8 @@ public:
                                   ne_core_permission_callback callback,
                                   const void *user_data);
 
+  void run_exit_callbacks();
+
   std::unordered_map<uint64_t, ne_core_permission_event> permissions;
   std::vector<std::function<void()>> next_frame_executors;
   std::vector<std::function<void()>> exit_callbacks;
@@ -63,6 +65,17 @@ void ne_core_instance::invoke_permission_callback(
       [callback, user_data, captured_event = *event]() mutable {
         callback(&captured_event, user_data);
       });
+}
+
+/******************************************************************************/
+void ne_core_instance::run_exit_callbacks()
+{
+  // Run through all exit callbacks in reverse order (LIFO).
+  while (!exit_callbacks.empty())
+  {
+    exit_callbacks.back()();
+    exit_callbacks.pop_back();
+  }
 }
 
 /******************************************************************************/
@@ -186,6 +199,7 @@ static void _ne_core_exit(uint64_t *result, int32_t return_code)
   NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
 
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
+  _instance->run_exit_callbacks();
   exit(return_code);
 }
 void (*ne_core_exit)(uint64_t *result, int32_t return_code) = &_ne_core_exit;
@@ -255,12 +269,7 @@ int32_t main(int32_t argc, char *argv[])
     _instance->next_frame_executors.clear();
   }
 
-  // Run through all exit callbacks in reverse order (LIFO).
-  while (!_instance->exit_callbacks.empty())
-  {
-    _instance->exit_callbacks.back()();
-    _instance->exit_callbacks.pop_back();
-  }
+  _instance->run_exit_callbacks();
 
   _instance = nullptr;
   return result;
