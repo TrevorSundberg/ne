@@ -1,14 +1,24 @@
 // MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test_core/test_core.h"
 
-static int32_t callback_counter = 0;
+static int32_t frame_counter = 0;
+static int32_t exit_counter = 0;
 
 static void test_frame_callback(const ne_core_frame_event *event,
                                 const void *user_data)
 {
   (void)event;
   (void)user_data;
-  ++callback_counter;
+  ++frame_counter;
+}
+
+static void test_exit_callback(const ne_core_exit_event *event,
+                               const void *user_data)
+{
+  (void)event;
+  auto table = static_cast<test_table *>(const_cast<void *>(user_data));
+  TEST_EXPECT(frame_counter == 2);
+  ++exit_counter;
 }
 
 static void full_tests(test_table *table)
@@ -51,10 +61,6 @@ static void full_tests(test_table *table)
   TEST_EXPECT(test_memory_compare_value(buffer1, 0, sizeof(buffer1)) > 0);
   TEST_EXPECT(test_memory_compare_value(buffer1, 255, sizeof(buffer1)) < 0);
   TEST_EXPECT(test_memory_compare_value(buffer2, 0, sizeof(buffer1)) == 0);
-
-  TEST_CLEAR_RESULT();
-  ne_core_request_frame(table->result, &test_frame_callback, table);
-  TEST_EXPECT_RESULT(table->expected_result);
 }
 
 static void null_tests(test_table *table)
@@ -73,11 +79,20 @@ static void shared_tests(test_table *table)
   TEST_CLEAR_RESULT();
   ne_core_hello_world(table->result);
   TEST_EXPECT_RESULT(table->expected_result);
+
+  TEST_CLEAR_RESULT();
+  ne_core_on_exit(table->result, &test_exit_callback, table);
+  TEST_EXPECT_RESULT(table->expected_result);
+
+  TEST_CLEAR_RESULT();
+  ne_core_request_frame(table->result, &test_frame_callback, table);
+  TEST_EXPECT_RESULT(table->expected_result);
 }
 
 static void exit_tests(test_table *table)
 {
-  TEST_EXPECT(callback_counter == 2);
+  TEST_EXPECT(frame_counter == 2);
+  TEST_EXPECT(exit_counter == 2);
 }
 
 void test_core(ne_core_bool simulated_environment)

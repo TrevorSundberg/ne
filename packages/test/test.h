@@ -32,7 +32,7 @@ struct test_table
 
   // Tests that run at the end of all tests completing. This typically involves
   // verifying that all asynchronous callbacks were invoked.
-  // Only called once at exit, regardless of support or permission.
+  // Only called once at exit if ne_core is supported.
   void (*exit_tests)(test_table *table);
 
   // The result we expect out of the tests that are running.

@@ -618,6 +618,11 @@ static void test_on_exit(const ne_core_exit_event *event, const void *user_data)
 
 void test_run(test_table *table)
 {
+  // We register exit callbacks here since the callbacks are executed in LIFO
+  // order and we want the library to have a change to register it's own exit
+  // callbacks that will be called before the test exit.
+  ne_core_on_exit(nullptr, &test_on_exit, table);
+
   table->success = NE_CORE_TRUE;
   table->is_final_run = NE_CORE_FALSE;
   uint64_t result = NE_CORE_RESULT_NOT_SET;
@@ -632,18 +637,7 @@ void test_run(test_table *table)
   test_all(table);
 
   // Because of events, the test may continue well past this point so we can't
-  // return a success or failure here, so we run the exit tests below.
-  if (ne_core_supported(nullptr) != NE_CORE_FALSE)
-  {
-    TEST_CLEAR_RESULT();
-    ne_core_on_exit(table->result, &test_on_exit, table);
-    TEST_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
-  }
-  else
-  {
-    TEST_CLEAR_RESULT();
-    table->exit_tests(table);
-  }
+  // return a success or failure here.
 }
 
 int32_t ne_core_main(int32_t argc, char *argv[])
