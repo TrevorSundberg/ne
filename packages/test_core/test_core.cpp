@@ -6,7 +6,7 @@
 #define TEST_CORE_RANDOM_M 18446744071562067968ULL
 #define TEST_CORE_RANDOM_SEED 123456789ULL
 
-static const char *permission_user_data = "test";
+static int32_t callback_counter = 0;
 
 ne_core_bool test_core_validate(ne_core_bool value,
                                 const char *file,
@@ -483,35 +483,81 @@ static void test_core_null(test_core_table *table)
   table->shared_tests(table);
 }
 
-static void test_core_event_callback(ne_core_event *event,
-                                     const void *user_data)
+static void test_core_query_permission_granted_callback(
+    const ne_core_permission_event *event, const void *user_data)
 {
   auto table = static_cast<test_core_table *>(const_cast<void *>(user_data));
-  if (event->type == NE_CORE_EVENT_PERMISSION_GRANTED)
+  TEST_CORE_EXPECT(event->permission == table->permission);
+  TEST_CORE_EXPECT(event->current_state == ne_core_permission_state_granted);
+  TEST_CORE_EXPECT(event->previous_state == ne_core_permission_state_prompt);
+
+  // We got permission so run both full and shared tests.
+  TEST_CORE_CLEAR_RESULT();
+  table->expected_result = NE_CORE_RESULT_SUCCESS;
+  test_core_full(table);
+}
+
+static void test_core_query_permission_denied_callback(
+    const ne_core_permission_event *event, const void *user_data)
+{
+  auto table = static_cast<test_core_table *>(const_cast<void *>(user_data));
+  TEST_CORE_EXPECT(event->permission == table->permission);
+  TEST_CORE_EXPECT(event->current_state == ne_core_permission_state_denied);
+  TEST_CORE_EXPECT(event->previous_state == ne_core_permission_state_prompt);
+
+  // We don't have permission, so check that all tests return null/0 as well
+  // as the permission denied result.
+  TEST_CORE_CLEAR_RESULT();
+  table->expected_result = NE_CORE_RESULT_PERMISSION_DENIED;
+  test_core_null(table);
+}
+
+static void test_core_request_permission_callback(
+    const ne_core_permission_event *event, const void *user_data)
+{
+  auto table = static_cast<test_core_table *>(const_cast<void *>(user_data));
+  TEST_CORE_EXPECT(event->permission == table->permission);
+  TEST_CORE_EXPECT(event->current_state != ne_core_permission_state_prompt);
+  TEST_CORE_EXPECT(event->previous_state == ne_core_permission_state_prompt);
+
+  if (event->current_state == ne_core_permission_state_granted)
   {
     // We SHOULD have permission.
     TEST_CORE_CLEAR_RESULT();
-    TEST_CORE_EXPECT(table->check_permission(table->result) == NE_CORE_TRUE);
+    ne_core_query_permission(table->result, table->permission,
+                             &test_core_query_permission_granted_callback,
+                             table);
     TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
-
-    // We got permission so run both full and shared tests.
-    TEST_CORE_CLEAR_RESULT();
-    table->expected_result = NE_CORE_RESULT_SUCCESS;
-    test_core_full(table);
   }
-  else if (event->type == NE_CORE_EVENT_PERMISSION_DENIED)
+  else
   {
+    TEST_CORE_EXPECT(event->current_state == ne_core_permission_state_denied);
+
     // We SHOULD NOT have permission.
     TEST_CORE_CLEAR_RESULT();
-    TEST_CORE_EXPECT(table->check_permission(table->result) == NE_CORE_FALSE);
+    ne_core_query_permission(table->result, table->permission,
+                             &test_core_query_permission_denied_callback,
+                             table);
     TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
-
-    // We don't have permission, so check that all tests return null/0 as well
-    // as the permission denied result.
-    TEST_CORE_CLEAR_RESULT();
-    table->expected_result = NE_CORE_RESULT_PERMISSION_DENIED;
-    test_core_null(table);
   }
+}
+
+static void test_core_query_permission_prompt_callback(
+    const ne_core_permission_event *event, const void *user_data)
+{
+  auto table = static_cast<test_core_table *>(const_cast<void *>(user_data));
+  TEST_CORE_EXPECT(event->permission == table->permission);
+  TEST_CORE_EXPECT(event->current_state == ne_core_permission_state_prompt);
+  TEST_CORE_EXPECT(event->previous_state == ne_core_permission_state_prompt);
+}
+
+static void test_core_query_permission_invalid_callback(
+    const ne_core_permission_event *event, const void *user_data)
+{
+  auto table = static_cast<test_core_table *>(const_cast<void *>(user_data));
+  TEST_CORE_EXPECT(event->permission == table->permission);
+  TEST_CORE_EXPECT(event->current_state == ne_core_permission_state_invalid);
+  TEST_CORE_EXPECT(event->previous_state == ne_core_permission_state_invalid);
 }
 
 static void test_core_all(test_core_table *table)
@@ -520,28 +566,24 @@ static void test_core_all(test_core_table *table)
   ne_core_bool supported = table->supported(table->result);
   TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
 
-  // We expect both or neither.
-  TEST_CORE_EXPECT(!!table->check_permission == !!table->request_permission);
-
-  bool hasPermissions = table->check_permission != nullptr &&
-                        table->request_permission != nullptr;
-
   if (supported != NE_CORE_FALSE)
   {
-    TEST_CORE_CLEAR_RESULT();
-    ne_core_set_event_callback(table->result, &test_core_event_callback, table);
-    TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
-
-    if (hasPermissions)
+    if (table->permission != NE_CORE_INVALID_PERMISSION)
     {
-      // We SHOULD NOT have permission.
+      // To test permissions, the core must be supported.
+      TEST_CORE_EXPECT(ne_core_supported(nullptr) == NE_CORE_TRUE);
+
+      // Permissions should currently be 'prompt'.
       TEST_CORE_CLEAR_RESULT();
-      TEST_CORE_EXPECT(table->check_permission(table->result) == NE_CORE_FALSE);
+      ne_core_query_permission(table->result, table->permission,
+                               &test_core_query_permission_prompt_callback,
+                               table);
       TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
 
-      // After requesting permission we must wait for a granted/denied response.
+      // Request permission and wait for the granted/denied callback.
       TEST_CORE_CLEAR_RESULT();
-      table->request_permission(table->result, permission_user_data);
+      ne_core_request_permission(table->result, &table->permission, 1, nullptr,
+                                 &test_core_request_permission_callback, table);
       TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
     }
     else
@@ -554,16 +596,22 @@ static void test_core_all(test_core_table *table)
   }
   else
   {
-    if (hasPermissions)
+    if (table->permission != NE_CORE_INVALID_PERMISSION)
     {
-      // Requesting/checking permission should also return not-supported / 0.
-      TEST_CORE_CLEAR_RESULT();
-      TEST_CORE_EXPECT(table->check_permission(table->result) == NE_CORE_FALSE);
-      TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);
+      // To test permissions, the core must be supported.
+      TEST_CORE_EXPECT(ne_core_supported(nullptr) == NE_CORE_TRUE);
 
       TEST_CORE_CLEAR_RESULT();
-      table->request_permission(table->result, permission_user_data);
-      TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);
+      ne_core_query_permission(table->result, table->permission,
+                               &test_core_query_permission_invalid_callback,
+                               table);
+      TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
+
+      TEST_CORE_CLEAR_RESULT();
+      ne_core_request_permission(table->result, &table->permission, 1, nullptr,
+                                 &test_core_query_permission_invalid_callback,
+                                 table);
+      TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
     }
 
     TEST_CORE_CLEAR_RESULT();
@@ -572,7 +620,16 @@ static void test_core_all(test_core_table *table)
   }
 }
 
-ne_core_bool test_core_run(test_core_table *table)
+static void test_core_on_exit(const ne_core_exit_event *event,
+                              const void *user_data)
+{
+  (void)event;
+  auto table = static_cast<test_core_table *>(const_cast<void *>(user_data));
+  TEST_CORE_CLEAR_RESULT();
+  table->exit_tests(table);
+}
+
+void test_core_run(test_core_table *table)
 {
   table->success = NE_CORE_TRUE;
   table->is_final_run = NE_CORE_FALSE;
@@ -587,10 +644,30 @@ ne_core_bool test_core_run(test_core_table *table)
   table->result = nullptr;
   test_core_all(table);
 
-  return table->success;
+  // Because of events, the test may continue well past this point so we can't
+  // return a success or failure here, so we run the exit tests below.
+  if (ne_core_supported(nullptr) != NE_CORE_FALSE)
+  {
+    TEST_CORE_CLEAR_RESULT();
+    ne_core_on_exit(table->result, &test_core_on_exit, table);
+    TEST_CORE_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
+  }
+  else
+  {
+    TEST_CORE_CLEAR_RESULT();
+    table->exit_tests(table);
+  }
 }
 
-static void _full_tests(test_core_table *table)
+static void test_frame_callback(const ne_core_frame_event *event,
+                                const void *user_data)
+{
+  (void)event;
+  (void)user_data;
+  ++callback_counter;
+}
+
+static void full_tests(test_core_table *table)
 {
   TEST_CORE_CLEAR_RESULT();
   void *allocation = ne_core_allocate(table->result, 1);
@@ -634,9 +711,13 @@ static void _full_tests(test_core_table *table)
       test_core_memory_compare_value(buffer1, 255, sizeof(buffer1)) < 0);
   TEST_CORE_EXPECT(
       test_core_memory_compare_value(buffer2, 0, sizeof(buffer1)) == 0);
+
+  TEST_CORE_CLEAR_RESULT();
+  ne_core_request_frame(table->result, &test_frame_callback, table);
+  TEST_CORE_EXPECT_RESULT(table->expected_result);
 }
 
-static void _null_tests(test_core_table *table)
+static void null_tests(test_core_table *table)
 {
   TEST_CORE_CLEAR_RESULT();
   TEST_CORE_EXPECT(ne_core_allocate(table->result, 1) == nullptr);
@@ -647,13 +728,32 @@ static void _null_tests(test_core_table *table)
   TEST_CORE_EXPECT_RESULT(table->expected_result);
 }
 
-static void _shared_tests(test_core_table *table)
+static void shared_tests(test_core_table *table)
 {
+  TEST_CORE_CLEAR_RESULT();
   ne_core_hello_world(table->result);
   TEST_CORE_EXPECT_RESULT(table->expected_result);
 }
 
-ne_core_bool test_core(ne_core_bool simulated_environment)
+static void exit_tests(test_core_table *table)
 {
-  TEST_CORE_RUN(ne_core_supported, nullptr, nullptr);
+  TEST_CORE_EXPECT(callback_counter == 2);
+}
+
+void test_core(ne_core_bool simulated_environment)
+{
+  TEST_CORE_RUN(ne_core_supported, NE_CORE_INVALID_PERMISSION);
+}
+
+int32_t ne_core_main(int32_t argc, char *argv[])
+{
+  auto simulated_environment = static_cast<ne_core_bool>(
+      argc >= 2 &&
+      test_core_string_compare(argv[1], "--simulated_environment") == 0);
+
+  test_core(simulated_environment);
+  // test_io(simulated_environment);
+
+  // We want to return 0 for success, and 1 for error.
+  return 0;
 }

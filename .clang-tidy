@@ -1,6 +1,5 @@
 Checks: "*,\
--clang-diagnostic-c++98-compat-pedantic,\
--clang-diagnostic-c++98-compat,\
+-clang-diagnostic-c++98*,\
 -clang-diagnostic-deprecated,\
 -clang-diagnostic-documentation-unknown-command,\
 -clang-diagnostic-unused-macros,\
