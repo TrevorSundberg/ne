@@ -235,7 +235,7 @@ static void _input_free(uint64_t *result, ne_core_stream *stream)
 }
 
 /******************************************************************************/
-void _ne_io_get_input(uint64_t *result, ne_core_stream *stream_out)
+static void _ne_io_get_input(uint64_t *result, ne_core_stream *stream_out)
 {
   NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
 
@@ -326,9 +326,9 @@ static uint64_t _outgoing_write(uint64_t *result,
 }
 
 /******************************************************************************/
-void _outgoing_flush(uint64_t *result,
-                     const ne_core_stream *stream,
-                     uint64_t os_handle)
+static void _outgoing_flush(uint64_t *result,
+                            const ne_core_stream *stream,
+                            uint64_t os_handle)
 {
 #if defined(NE_CORE_PLATFORM_WINDOWS)
   HANDLE handle = GetStdHandle((DWORD)os_handle);
@@ -385,7 +385,7 @@ static uint64_t _output_write(uint64_t *result,
 }
 
 /******************************************************************************/
-void _output_flush(uint64_t *result, const ne_core_stream *stream)
+static void _output_flush(uint64_t *result, const ne_core_stream *stream)
 {
   return _outgoing_flush(result, stream, NE_IO_OUTPUT);
 }
@@ -408,7 +408,7 @@ static uint64_t _error_write(uint64_t *result,
 }
 
 /******************************************************************************/
-void _error_flush(uint64_t *result, const ne_core_stream *stream)
+static void _error_flush(uint64_t *result, const ne_core_stream *stream)
 {
   return _outgoing_flush(result, stream, NE_IO_ERROR);
 }
@@ -420,7 +420,7 @@ static void _error_free(uint64_t *result, ne_core_stream *stream)
 }
 
 /******************************************************************************/
-void _ne_io_get_output(uint64_t *result, ne_core_stream *stream_out)
+static void _ne_io_get_output(uint64_t *result, ne_core_stream *stream_out)
 {
   NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
 
@@ -434,7 +434,7 @@ void (*ne_io_get_output)(uint64_t *result,
                          ne_core_stream *stream_out) = &_ne_io_get_output;
 
 /******************************************************************************/
-void _ne_io_get_error(uint64_t *result, ne_core_stream *stream_out)
+static void _ne_io_get_error(uint64_t *result, ne_core_stream *stream_out)
 {
   NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
 

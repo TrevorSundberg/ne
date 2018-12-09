@@ -129,8 +129,8 @@ typedef uint8_t ne_core_bool;
 #if !defined(NDEBUG)
 /// Reports an error if a condition is false. Does not abort.
 #define NE_CORE_ASSERT(condition, text)                                        \
-  NE_CORE_ENCLOSURE(if (!(condition))                                          \
-                        ne_core_error(0, __FILE__, __LINE__, (text));)
+  NE_CORE_ENCLOSURE(if (!(condition)) ne_core_error(NE_CORE_NULL, __FILE__,    \
+                                                    __LINE__, (text));)
 #else
 /// Reports an error if a condition is false. Does not abort.
 #define NE_CORE_ASSERT(condition, text)

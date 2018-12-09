@@ -14,3 +14,4 @@ Checks: "*,\
 -modernize-use-using,\
 "
 AnalyzeTemporaryDtors: true
+FormatStyle: file

@@ -61,7 +61,7 @@ async function runClangTidy(dirs, sourceFiles)
   {
     // Clang-tidy emits all the errors to the standard out.
     // We capture them and re-emit them to stderr.
-    const result = await execa('clang-tidy', [filePath], clangTidyOptions);
+    const result = await execa('clang-tidy', ['-extra-arg=-Weverything', filePath], clangTidyOptions);
     if (result.stdout)
     {
       console.error(result.stdout);
