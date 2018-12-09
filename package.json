@@ -3,9 +3,6 @@
   "version": "0.0.0",
   "description": "Compile once against a well documented cross platform API and run your program on any platform.",
   "main": "build.js",
-  "scripts": {
-    "build": "node build.js"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TrevorSundberg/ne.git"
@@ -22,6 +19,7 @@
   },
   "homepage": "https://github.com/TrevorSundberg/ne#readme",
   "dependencies": {
+    "command-exists": "^1.2.8",
     "eslint": "^5.9.0",
     "execa": "^1.0.0",
     "glob": "^7.1.3",

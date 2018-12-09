@@ -4,6 +4,21 @@ const mkdirp = require('mkdirp');
 const fs = require('fs');
 const glob = require('glob');
 const os = require('os');
+const commandExists = require('command-exists');
+
+async function verifyCommand(command)
+{
+  try
+  {
+    await commandExists(command);
+  }
+  catch (err)
+  {
+    console.error(`command '${command}' does not exist`);
+    return false;
+  }
+  return true;
+}
 
 function gatherDirectories()
 {
@@ -51,6 +66,11 @@ async function runEslint(dirs)
 
 async function runClangTidy(dirs, sourceFiles)
 {
+  if (!await verifyCommand('clang-tidy'))
+  {
+    return;
+  }
+
   // Run clang-tidy.
   const clangTidyOptions = {
     cwd: dirs.packages,
@@ -71,6 +91,11 @@ async function runClangTidy(dirs, sourceFiles)
 
 async function runClangFormat(dirs, sourceFiles)
 {
+  if (!await verifyCommand('clang-format'))
+  {
+    return;
+  }
+
   const clangFormatOptions = {
     cwd: dirs.packages,
     stdio: ['ignore', 'pipe', 'ignore'],
@@ -100,6 +125,11 @@ async function runClangFormat(dirs, sourceFiles)
 
 async function runDoxygen(dirs)
 {
+  if (!await verifyCommand('doxygen'))
+  {
+    return;
+  }
+
   const doxygenOptions = {
     cwd: dirs.root,
     stdio: ['ignore', 'ignore', 'inherit'],
@@ -110,6 +140,11 @@ async function runDoxygen(dirs)
 
 async function runCmake(dirs)
 {
+  if (!await verifyCommand('cmake'))
+  {
+    return;
+  }
+
   const cmakeOptions = {
     cwd: dirs.build,
     stdio: ['ignore', 'ignore', 'inherit'],
@@ -165,7 +200,7 @@ async function runBuild(dirs)
   }
   else
   {
-    console.error('Unhandled platform');
+    console.error('runBuild: Unhandled platform');
   }
 }
 

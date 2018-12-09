@@ -9,8 +9,9 @@ steps:
   inputs:
     versionSpec: '10.x'
   displayName: 'Install Node.js'
-
+- task: CMake@1
 - script: |
     npm install
-    npm run build
+    node build.js
   displayName: 'Full build'
+  failOnStderr: true
