@@ -173,6 +173,7 @@ async function main()
 {
   const dirs = gatherDirectories();
   await runEslint(dirs);
+  // Run style/format tests on cmake files.
   const sourceFiles = gatherSourceFiles(dirs);
   await runClangTidy(dirs, sourceFiles);
   await runClangFormat(dirs, sourceFiles);

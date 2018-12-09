@@ -1,6 +1,8 @@
-// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
+/// @file
+/// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../ne_io/ne_io.h"
-#include <stdio.h>
+#include <cstdio>
+#include <cstring>
 
 #if defined(NE_CORE_PLATFORM_WINDOWS)
 #define NO_WIN #@ MIN_MAX
@@ -16,18 +18,17 @@ struct _input_opaque
 };
 #define NE_IO_OUTPUT STD_OUTPUT_HANDLE
 #define NE_IO_ERROR STD_ERROR_HANDLE
-#define NE_IO_SUPPORTED
+static const constexpr bool _supported = true;
+#else
+#define NE_IO_OUTPUT 0
+#define NE_IO_ERROR 0
+static const constexpr bool _supported = false;
 #endif
 
 /******************************************************************************/
 static ne_core_bool _ne_io_supported(uint64_t *result)
 {
-  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
-#if defined(NE_IO_SUPPORTED)
-  return NE_CORE_TRUE;
-#else
-  return NE_CORE_FALSE;
-#endif
+  NE_CORE_SUPPORTED_IMPLEMENTATION(_supported);
 }
 ne_core_bool (*ne_io_supported)(uint64_t *result) = &_ne_io_supported;
 
@@ -125,13 +126,14 @@ static uint64_t _input_read(uint64_t *result,
           // Copy the partial data to our temporary buffer.
           opaque->start = 0;
           opaque->end = (uint8_t)leftover_size;
-          memcpy(opaque->buffer, (uint8_t *)&utf8_code_point + multibyte_size,
-                 (size_t)leftover_size);
+          std::memcpy(opaque->buffer,
+                      (uint8_t *)&utf8_code_point + multibyte_size,
+                      (size_t)leftover_size);
         }
 
         // Copy the code-point to the output buffer.
-        memcpy((uint8_t *)buffer + bytes_read, &utf8_code_point,
-               (size_t)multibyte_size);
+        std::memcpy((uint8_t *)buffer + bytes_read, &utf8_code_point,
+                    (size_t)multibyte_size);
         bytes_read += multibyte_size;
       }
 
@@ -205,7 +207,13 @@ static uint64_t _input_read(uint64_t *result,
     }
   }
 #else
-  NE_CORE_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);
+  (void)result;
+  (void)stream;
+  (void)buffer;
+  (void)size;
+  (void)allow_blocking;
+  NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);
+  NE_CORE_ERROR("Invalid call");
   return 0;
 #endif
 }
@@ -220,22 +228,21 @@ static void _input_free(uint64_t *result, ne_core_stream *stream)
   NE_CORE_ASSERT(GetStdHandle(STD_INPUT_HANDLE) == 0, "Expected null handle");
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 #else
-  NE_CORE_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);
-  return 0;
+  (void)stream;
+  NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);
+  NE_CORE_ERROR("Invalid call");
 #endif
 }
 
 /******************************************************************************/
 void _ne_io_get_input(uint64_t *result, ne_core_stream *stream_out)
 {
-#if defined(NE_IO_SUPPORTED)
-  memset(stream_out, 0, sizeof(*stream_out));
+  NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
+
+  std::memset(stream_out, 0, sizeof(*stream_out));
   stream_out->read = &_input_read;
   stream_out->free = &_input_free;
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
-#else
-  NE_CORE_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);
-#endif
 }
 void (*ne_io_get_input)(uint64_t *result,
                         ne_core_stream *stream_out) = &_ne_io_get_input;
@@ -306,7 +313,14 @@ static uint64_t _outgoing_write(uint64_t *result,
     return 0;
   }
 #else
-  NE_CORE_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);
+  (void)result;
+  (void)stream;
+  (void)buffer;
+  (void)size;
+  (void)allow_blocking;
+  (void)os_handle;
+  NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);
+  NE_CORE_ERROR("Invalid call");
   return 0;
 #endif
 }
@@ -331,7 +345,11 @@ void _outgoing_flush(uint64_t *result,
   else
     NE_CORE_RESULT(NE_CORE_RESULT_ERROR);
 #else
-  NE_CORE_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);
+  (void)result;
+  (void)stream;
+  (void)os_handle;
+  NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);
+  NE_CORE_ERROR("Invalid call");
 #endif
 }
 
@@ -347,7 +365,11 @@ static void _outgoing_free(uint64_t *result,
   NE_CORE_ASSERT(GetStdHandle((DWORD)os_handle) == 0, "Expected null handle");
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 #else
-  NE_CORE_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);
+  (void)result;
+  (void)stream;
+  (void)os_handle;
+  NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);
+  NE_CORE_ERROR("Invalid call");
 #endif
 }
 
@@ -400,15 +422,13 @@ static void _error_free(uint64_t *result, ne_core_stream *stream)
 /******************************************************************************/
 void _ne_io_get_output(uint64_t *result, ne_core_stream *stream_out)
 {
-#if defined(NE_IO_SUPPORTED)
-  memset(stream_out, 0, sizeof(*stream_out));
+  NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
+
+  std::memset(stream_out, 0, sizeof(*stream_out));
   stream_out->write = &_output_write;
   stream_out->flush = &_output_flush;
   stream_out->free = &_output_free;
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
-#else
-  NE_CORE_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);
-#endif
 }
 void (*ne_io_get_output)(uint64_t *result,
                          ne_core_stream *stream_out) = &_ne_io_get_output;
@@ -416,15 +436,13 @@ void (*ne_io_get_output)(uint64_t *result,
 /******************************************************************************/
 void _ne_io_get_error(uint64_t *result, ne_core_stream *stream_out)
 {
-#if defined(NE_IO_SUPPORTED)
-  memset(stream_out, 0, sizeof(*stream_out));
+  NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
+
+  std::memset(stream_out, 0, sizeof(*stream_out));
   stream_out->write = &_error_write;
   stream_out->flush = &_error_flush;
   stream_out->free = &_error_free;
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
-#else
-  NE_CORE_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);
-#endif
 }
 void (*ne_io_get_error)(uint64_t *result,
                         ne_core_stream *stream_out) = &_ne_io_get_error;

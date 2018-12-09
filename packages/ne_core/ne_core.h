@@ -1,6 +1,5 @@
 /// @file
 /// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
-
 #pragma once
 
 #if defined(__cplusplus)
@@ -157,6 +156,11 @@ typedef uint8_t ne_core_bool;
 /// TO be used by #NE_CORE_UNSUPPORTED_RETURN when there is no return.
 #define NE_CORE_NONE
 
+/// Implements the supported call given a typically global boolean value.
+#define NE_CORE_SUPPORTED_IMPLEMENTATION(supported)                            \
+  NE_CORE_ENCLOSURE(NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);                    \
+                    return (supported) ? NE_CORE_TRUE : NE_CORE_FALSE;)
+
 // This header is considered tentative and is a work in progress. It contains
 // the API as well as notes about how the API should work. Some of these notes
 // may eventually be transcribed into a standards document.
@@ -304,9 +308,11 @@ typedef struct ne_core_tag_internally_called ne_core_tag_internally_called;
 /// Null is considered a valid value for the corresponding pointer.
 typedef struct ne_core_tag_nullable ne_core_tag_nullable;
 
-/// The function must only be called from the main thread.
-/// When applied to a callback, this means the callback will always occur on the
-/// main thread.
+/// The function must only be called from the main thread. If the function
+/// outputs a struct with function pointers (such as #ne_core_stream or
+/// #ne_core_enumerator) then it is implied that those function pointers are
+/// also main thread only. When applied to a callback, this means the callback
+/// will always occur on the main thread.
 typedef struct ne_core_tag_main_thread_only ne_core_tag_main_thread_only;
 
 /// It is not possible for a function pointer within the struct to result in
@@ -347,6 +353,10 @@ extern int32_t ne_core_main(int32_t argc, char *argv[]);
 /// about why this result is returned.
 #define NE_CORE_RESULT_ERROR 0x625f2ae2c625f5dc
 
+/// A special error code that should never surface to any application and occurs
+/// only when a dramatic internal error occurs.
+#define NE_CORE_RESULT_INTERNAL_ERROR 0x5bdb7f43fd650811
+
 /// Only used for unit testing to set the result before calling a function.
 /// Using this value allows us to validate that the result was properly set.
 #define NE_CORE_RESULT_NOT_SET 0x2dac613666331563
@@ -357,7 +367,7 @@ extern int32_t ne_core_main(int32_t argc, char *argv[]);
 
 /// Determines if this package is fully supported on this platform.
 /// @param result
-///   #NE_CORE_RESULT_SUCCESS:
+///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
 /// @return
 ///   #NE_CORE_TRUE if supported, #NE_CORE_FALSE otherwise.
@@ -378,10 +388,10 @@ typedef void (*ne_core_exit_callback)(const ne_core_exit_event *event,
 /// an #ne_core_exit_callback will result in the callback being invoked
 /// immediately after.
 /// @param result
-///   #NE_CORE_RESULT_SUCCESS:
+///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
-///   #NE_CORE_RESULT_NOT_SUPPORTED:
-///     This entire package is not supported.
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
 /// @param callback
 ///   A user provided callback that will be invoked upon exiting.
 /// @param user_data
@@ -443,10 +453,10 @@ typedef void (*ne_core_permission_callback)(
 /// permission is given the callback will be invoked with a result of
 /// #ne_core_permission_state_invalid.
 /// @param result
-///   #NE_CORE_RESULT_SUCCESS:
+///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
-///   #NE_CORE_RESULT_NOT_SUPPORTED:
-///     This entire package is not supported.
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
 /// @param permission
 ///   The permission that we want to check the state of.
 /// @param callback
@@ -471,10 +481,10 @@ NE_CORE_API void (*ne_core_query_permission)(
 /// application permission settings or operating system policy, therefore you
 /// should always call #ne_core_query_permission before usage.
 /// @param result
-///   #NE_CORE_RESULT_SUCCESS:
+///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
-///   #NE_CORE_RESULT_NOT_SUPPORTED:
-///     This entire package is not supported.
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
 /// @param permissions
 ///   An array of permissions that the user wants to request. Platforms will
 ///   attempt to show all permission requests in a single dialog.
@@ -505,10 +515,10 @@ NE_CORE_API void (*ne_core_request_permission)(
 /// introductory function to demonstrate that an application is working. This
 /// function should be non-blocking.
 /// @param result
-///   #NE_CORE_RESULT_SUCCESS:
+///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
-///   #NE_CORE_RESULT_NOT_SUPPORTED:
-///     This entire package is not supported.
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
 /// @see #ne_core_tag_main_thread_only.
 NE_CORE_API void (*ne_core_hello_world)(uint64_t *result);
 
@@ -525,10 +535,10 @@ typedef void (*ne_core_frame_callback)(const ne_core_frame_event *event,
 /// infinite loop in main, thus yielding time back to the OS/browser. This
 /// function is supported by non-cooperative multi-tasked systems.
 /// @param result
-///   #NE_CORE_RESULT_SUCCESS:
+///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
-///   #NE_CORE_RESULT_NOT_SUPPORTED:
-///     This entire package is not supported.
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
 /// @param callback
 ///   A user provided callback that will be invoked on the next frame.
 /// @param user_data
@@ -543,10 +553,10 @@ NE_CORE_API void (*ne_core_request_frame)(uint64_t *result,
 /// called and any open streams will be closed and global destructors will be
 /// invoked.
 /// @param result
-///   #NE_CORE_RESULT_SUCCESS:
+///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
-///   #NE_CORE_RESULT_NOT_SUPPORTED:
-///     This entire package is not supported.
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
 /// @param return_code
 ///   The process exit code to be returned (0 typically indicates success).
 /// @see #ne_core_tag_main_thread_only.
@@ -555,10 +565,10 @@ NE_CORE_API void (*ne_core_exit)(uint64_t *result, int32_t return_code);
 /// Tells the application to log an error. This is used for unit tests.
 /// If possible the platform will print to the standard error stream.
 /// @param result
-///   #NE_CORE_RESULT_SUCCESS:
+///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
-///   #NE_CORE_RESULT_NOT_SUPPORTED:
-///     This entire package is not supported.
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
 /// @param file
 ///   The name or path to the file the error occurred in (typically __FILE__).
 /// @param line
@@ -574,11 +584,11 @@ NE_CORE_API void (*ne_core_error)(uint64_t *result,
 /// Attempts to allocate memory from the host or returns NE_CORE_NULL on
 /// failure.
 /// @param result
-///   #NE_CORE_RESULT_SUCCESS:
+///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
-///   #NE_CORE_RESULT_NOT_SUPPORTED:
-///     This entire package is not supported.
-///   #NE_CORE_RESULT_ALLOCATION_FAILED:
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
+///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
 ///     Not enough system memory or address space, or other system error.
 /// @param size_bytes
 ///   The number of bytes we are requesting to allocate.
@@ -590,10 +600,10 @@ NE_CORE_API uint8_t *(*ne_core_allocate)(uint64_t *result, uint64_t size_bytes);
 /// Frees memory that was returned from #ne_core_allocate. If null is passed
 /// for \p memory then this function will do nothing.
 /// @param result
-///   #NE_CORE_RESULT_SUCCESS:
+///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
-///   #NE_CORE_RESULT_NOT_SUPPORTED:
-///     This entire package is not supported.
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
 /// @param memory
 ///   The base memory address of the allocated region we wish to free, or null.
 NE_CORE_API void (*ne_core_free)(uint64_t *result, void *memory);
@@ -603,12 +613,12 @@ typedef struct ne_core_enumerator ne_core_enumerator;
 /// An interface for enumerating over any container or generated set of items.
 /// Functions that construct enumerators should denote the output value's
 /// type when calling #dereference. All functions filled out will be non-null.
-/// @see #ne_core_tag_struct_results
+/// @see #ne_core_tag_struct_results.
 struct ne_core_enumerator
 {
   /// Checks to see if the enumerator is empty (has no more values within it).
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
   /// @param self
   ///   The struct that owns the function pointer.
@@ -619,7 +629,7 @@ struct ne_core_enumerator
   /// Advanced the enumerator by one element. It is illegal to call this
   /// on an empty enumerator.
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
   /// @param self
   ///   The struct that owns the function pointer.
@@ -629,7 +639,7 @@ struct ne_core_enumerator
   /// each enumerator is specified by the API call that outputs the enumerator.
   /// It is illegal to call this on an empty enumerator.
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
   /// @param self
   ///   The struct that owns the function pointer.
@@ -643,7 +653,7 @@ struct ne_core_enumerator
   /// Frees and resources or memory held by the enumerator.
   /// After this all calls to the #ne_core_enumerator are undefined.
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
   /// @param self
   ///   The struct that owns the function pointer.
@@ -675,12 +685,13 @@ typedef enum ne_core_stream_seek_origin NE_CORE_ENUM
 /// Forward declaration and alias.
 typedef struct ne_core_stream ne_core_stream;
 /// An interface for reading and writing to any stream of bytes.
-/// Any function that outputs a stream must specify the
-/// exact set of functionality that is expected. Only the functions that are
-/// expected should be filled out, all others will be nulled out by the
-/// platform. The stream structure must be passed in to each function. It is
+/// Any function that outputs a stream must specify the exact set of
+/// functionality that is expected. Only the functions that are expected should
+/// be filled out, all others will be nulled out by the platform. If the
+/// funciton that creates the stream returns an error, the stream will be left
+/// as is. The stream structure must be passed in to each function. It is
 /// undefined behavior to pass in the wrong stream.
-/// @see #ne_core_tag_struct_results
+/// @see #ne_core_tag_struct_results.
 struct ne_core_stream
 {
   /// When blocking, this always reads the entire size specified unless the end
@@ -689,9 +700,9 @@ struct ne_core_stream
   /// end of the stream it will still return NE_CORE_RESULT_SUCCESS. Returns how
   /// much data was read.
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
-  ///   #NE_CORE_RESULT_ERROR:
+  ///   - #NE_CORE_RESULT_ERROR:
   ///     If an error occurred on the stream (such as a disk error, file
   ///     deleted, socket closed, etc.), or #is_terminated returns NE_CORE_TRUE.
   /// @param self
@@ -716,9 +727,9 @@ struct ne_core_stream
   /// much as possible and will not wait for more. Returns how much data was
   /// written.
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
-  ///   #NE_CORE_RESULT_ERROR:
+  ///   - #NE_CORE_RESULT_ERROR:
   ///     If an error occurred on the stream (such as a disk error, file
   ///     deleted, socket closed, etc.), or #is_terminated returns NE_CORE_TRUE.
   /// @param self
@@ -741,9 +752,9 @@ struct ne_core_stream
   /// Writes any buffered data to the underlying hardware stream. Flushing may
   /// block if data is unable to be written at the time.
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
-  ///   #NE_CORE_RESULT_ERROR:
+  ///   - #NE_CORE_RESULT_ERROR:
   ///     If an error occurred on the stream (such as a disk error, file
   ///     deleted, socket closed, etc.), or #is_terminated returns NE_CORE_TRUE.
   /// @param self
@@ -754,9 +765,9 @@ struct ne_core_stream
   /// Gets the position relative to the base of the stream (0 indicates the
   /// beginning).
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
-  ///   #NE_CORE_RESULT_ERROR:
+  ///   - #NE_CORE_RESULT_ERROR:
   ///     If an error occurred on the stream (such as a disk error, file
   ///     deleted, socket closed, etc.), or #is_terminated returns NE_CORE_TRUE.
   /// @param self
@@ -769,9 +780,9 @@ struct ne_core_stream
   /// Gets the current size of the stream. The size may change over time such as
   /// when reading from a file and data is written to the same file externally.
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
-  ///   #NE_CORE_RESULT_ERROR:
+  ///   - #NE_CORE_RESULT_ERROR:
   ///     If an error occurred on the stream (such as a disk error, file
   ///     deleted, socket closed, etc.), or #is_terminated returns NE_CORE_TRUE.
   /// @param self
@@ -785,7 +796,7 @@ struct ne_core_stream
   /// function calls will result in #NE_CORE_RESULT_ERROR. It is illegal to
   /// call this on invalid or freed streams.
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
   /// @param self
   ///   The struct that owns the function pointer.
@@ -799,9 +810,9 @@ struct ne_core_stream
   /// position if it attempts to move before the beggining (0) or after the end
   /// (#get_size).
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
-  ///   #NE_CORE_RESULT_ERROR:
+  ///   - #NE_CORE_RESULT_ERROR:
   ///     If an error occurred on the stream (such as a disk error, file
   ///     deleted, socket closed, etc.), or #is_terminated returns NE_CORE_TRUE.
   /// @param self
@@ -822,7 +833,7 @@ struct ne_core_stream
   /// After this all calls to the #ne_core_stream are undefined, including
   /// #is_terminated.
   /// @param result
-  ///   #NE_CORE_RESULT_SUCCESS:
+  ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
   /// @param self
   ///   The struct that owns the function pointer.

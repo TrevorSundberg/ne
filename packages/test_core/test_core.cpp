@@ -1,4 +1,5 @@
-// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
+/// @file
+/// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test_core/test_core.h"
 
 static int32_t frame_counter = 0;

@@ -1,8 +1,8 @@
 - dependency:
-    name: ne_core
+    name: test
     major: 0
     minor: 0
 - dependency:
-    name: test_core
+    name: ne_core
     major: 0
     minor: 0

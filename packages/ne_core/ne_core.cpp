@@ -1,4 +1,5 @@
-// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
+/// @file
+/// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../ne_core/ne_core.h"
 #include <cstdlib>
 #include <functional>
@@ -81,12 +82,7 @@ void ne_core_instance::run_exit_callbacks()
 /******************************************************************************/
 static ne_core_bool _ne_core_supported(uint64_t *result)
 {
-  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
-  if (!_supported)
-  {
-    return NE_CORE_FALSE;
-  }
-  return NE_CORE_TRUE;
+  NE_CORE_SUPPORTED_IMPLEMENTATION(_supported);
 }
 ne_core_bool (*ne_core_supported)(uint64_t *result) = &_ne_core_supported;
 

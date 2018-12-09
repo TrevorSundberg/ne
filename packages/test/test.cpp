@@ -1,4 +1,5 @@
-// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
+/// @file
+/// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test/test.h"
 
 #define TEST_RANDOM_A 1103515245ULL
@@ -648,8 +649,9 @@ int32_t ne_core_main(int32_t argc, char *argv[])
   // Invalid, but until we get a way for modules to run their own initialize and
   // register tests (dependency upon test) then  we must do this.
   extern void test_core(ne_core_bool simulated_environment);
+  extern void test_io(ne_core_bool simulated_environment);
   test_core(simulated_environment);
-  // test_io(simulated_environment);
+  test_io(simulated_environment);
 
   // We can't know whether the test completed by this point do to callbacks.
   return 0;

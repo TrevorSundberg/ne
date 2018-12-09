@@ -1,4 +1,5 @@
-// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
+/// @file
+/// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../ne_core/ne_intrinsic.h"
 #include <cstring>
 
