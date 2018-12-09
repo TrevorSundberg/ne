@@ -4,7 +4,7 @@
   "description": "Compile once against a well documented cross platform API and run your program on any platform.",
   "main": "build.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node build.js"
   },
   "repository": {
     "type": "git",
@@ -25,6 +25,7 @@
     "eslint": "^5.9.0",
     "execa": "^1.0.0",
     "glob": "^7.1.3",
-    "mkdirp": "^0.5.1"
+    "mkdirp": "^0.5.1",
+    "moxygen": "^0.7.12"
   }
 }

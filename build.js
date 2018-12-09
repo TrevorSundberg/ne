@@ -173,15 +173,15 @@ async function main()
 {
   const dirs = gatherDirectories();
   await runEslint(dirs);
-  // Run style/format tests on cmake files.
+  // TODO(Trevor.Sundberg): Run cmake_format.
   const sourceFiles = gatherSourceFiles(dirs);
   await runClangTidy(dirs, sourceFiles);
   await runClangFormat(dirs, sourceFiles);
   await runDoxygen(dirs);
-  // Run moxygen.
+  // TODO(Trevor.Sundberg): Run moxygen.
   await runCmake(dirs);
   await runBuild(dirs);
-  // Run tests.
+  // TODO(Trevor.Sundberg): Run tests.
 }
 
 main();
