@@ -5,19 +5,157 @@ const fs = require('fs');
 const glob = require('glob');
 const os = require('os');
 const commandExists = require('command-exists');
+const tempy = require('tempy');
+const request = require('request');
 
-async function verifyCommand(command)
+const platform = (() =>
+{
+  switch (os.platform())
+  {
+  case 'win32':
+    return 'windows';
+  case 'darwin':
+    return 'mac';
+  default:
+    return 'linux';
+  }
+})();
+
+async function checkCommand(command)
 {
   try
   {
     await commandExists(command);
+    return true;
   }
   catch (err)
+  {
+    return false;
+  }
+}
+
+async function verifyCommand(command)
+{
+  if (!await checkCommand(command))
   {
     console.error(`command '${command}' does not exist`);
     return false;
   }
   return true;
+}
+
+function download(url, fileName)
+{
+  console.log(`Downloading '${url}'`);
+  return new Promise((resolve) =>
+  {
+    const file = fs.createWriteStream(fileName);
+
+    request(url)
+      .on('error', console.error)
+      .pipe(file);
+
+    file.on('finish', () =>
+    {
+      file.close();
+      resolve();
+      console.log(`Completed '${url}'`);
+    });
+  });
+}
+
+async function downloadTemp(url, fileName)
+{
+  const filePath = tempy.file({
+    name: fileName
+  });
+  await download(url, filePath);
+  return filePath;
+}
+
+async function standardInstall(filePath, args)
+{
+  const options = {
+    stdio: ['ignore', 'ignore', 'inherit'],
+    reject: false
+  };
+  await execa(filePath, args ? args : [], options);
+}
+
+async function msiInstall(filePath, extraArgs)
+{
+  const options = {
+    stdio: ['ignore', 'ignore', 'inherit'],
+    reject: false
+  };
+  let args = ['/i', filePath, '/quiet', '/qn', '/norestart'];
+  if (extraArgs)
+  {
+    args = args.concat(extraArgs);
+  }
+  await execa('msiexec', args, options);
+}
+
+async function installProgram(info)
+{
+  console.log(`Checking ${info.name}`);
+  if (await info.check())
+  {
+    console.log(`Checked ${info.name}`);
+    return;
+  }
+
+  const settings = info[platform];
+  if (settings)
+  {
+    const filePath = await downloadTemp(settings.url, settings.file);
+    console.log(`Installing ${info.name}`);
+    await settings.install(filePath);
+    console.log(`Completed ${info.name}`);
+  }
+  else
+  {
+    console.error(`Platform ${platform} not supported for ${info.name}`);
+  }
+}
+
+function installLlvm()
+{
+  return installProgram({
+    name: 'LLVM',
+    check: async () => await checkCommand('clang-tidy') && await checkCommand('clang-format'),
+    windows: {
+      url: 'http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe',
+      file: 'LLVM-7.0.0-win64.exe',
+      install: filePath => standardInstall(filePath, ['/S'])
+    },
+  });
+}
+
+function installDoxygen()
+{
+  return installProgram({
+    name: 'Doxygen',
+    check: async () => await checkCommand('doxygen'),
+    windows: {
+      url: 'http://doxygen.nl/files/doxygen-1.8.14-setup.exe',
+      file: 'doxygen-1.8.14-setup.exe',
+      install: filePath => standardInstall(filePath, ['/VERYSILENT', '/NORESTART'])
+    },
+  });
+}
+
+function installCmake()
+{
+  return installProgram({
+    name: 'CMake',
+    check: async () => await checkCommand('cmake'),
+    windows: {
+      url: 'https://github.com/Kitware/CMake/releases/download/v3.13.1/cmake-3.13.1-win64-x64.msi',
+      file: 'cmake-3.13.1-win64-x64.msi',
+      install: filePath => msiInstall(filePath, ['ADD_CMAKE_TO_PATH=System'])
+    },
+  });
 }
 
 function gatherDirectories()
@@ -103,6 +241,7 @@ async function runClangFormat(dirs, sourceFiles)
     stripFinalNewline: false,
     stripEof: false
   };
+
   for (const filePath of sourceFiles)
   {
     // Clang-format emits the formatted file to the output.
@@ -158,53 +297,63 @@ async function runCmake(dirs)
 
 async function runBuild(dirs)
 {
-  if (os.platform() === 'win32')
+  switch (platform)
   {
-    const vswhereOptions = {
-      cwd: `${process.env['ProgramFiles(x86)']}/Microsoft Visual Studio/Installer/`,
-      stdio: ['ignore', 'pipe', 'inherit'],
-      reject: false
-    };
-    const result = await execa('vswhere.exe', vswhereOptions);
-    if (!result.stdout)
+  case 'windows':
     {
-      console.error('No output from vswhere.exe');
-      return;
-    }
-    const devenvPath = /productPath: (.*)/g.exec(result.stdout)[1];
-    if (!devenvPath)
-    {
-      console.error('No "productPath" from vswhere.exe');
-      return;
-    }
+      // TODO(Trevor.Sundberg): We should also perform a cmake build to clang on windows.
+      const vswhereOptions = {
+        cwd: `${process.env['ProgramFiles(x86)']}/Microsoft Visual Studio/Installer/`,
+        stdio: ['ignore', 'pipe', 'inherit'],
+        reject: false
+      };
+      const result = await execa('vswhere.exe', vswhereOptions);
+      if (!result.stdout)
+      {
+        console.error('No output from vswhere.exe');
+        return;
+      }
+      const devenvPath = /productPath: (.*)/g.exec(result.stdout)[1];
+      if (!devenvPath)
+      {
+        console.error('No "productPath" from vswhere.exe');
+        return;
+      }
 
-    const logPath = path.join(dirs.build, 'output.log');
-    safeDeleteFile(logPath);
+      const logPath = path.join(dirs.build, 'output.log');
+      safeDeleteFile(logPath);
 
-    const devenvOptions = {
-      cwd: dirs.build,
-      stdio: ['ignore', 'ignore', 'inherit'],
-      reject: false
-    };
-    const args = [path.join(dirs.build, 'ne.sln'), '/build', 'Debug', '/out', logPath];
-    await execa(devenvPath, args, devenvOptions);
-    const log = fs.readFileSync(logPath, {
-      encoding: 'utf8'
-    });
-    safeDeleteFile(logPath);
+      const devenvOptions = {
+        cwd: dirs.build,
+        stdio: ['ignore', 'ignore', 'inherit'],
+        reject: false
+      };
+      const args = [path.join(dirs.build, 'ne.sln'), '/build', 'Debug', '/out', logPath];
+      await execa(devenvPath, args, devenvOptions);
+      const log = fs.readFileSync(logPath, {
+        encoding: 'utf8'
+      });
+      safeDeleteFile(logPath);
 
-    if (!log.match(/, 0 failed,/g))
-    {
-      console.error(log);
+      if (!log.match(/, 0 failed,/g))
+      {
+        console.error(log);
+      }
     }
-  }
-  else
-  {
+    break;
+  default:
     console.error('runBuild: Unhandled platform');
   }
 }
 
-async function main()
+async function install()
+{
+  await installLlvm();
+  await installDoxygen();
+  await installCmake();
+}
+
+async function build()
 {
   const dirs = gatherDirectories();
   await runEslint(dirs);
@@ -219,4 +368,16 @@ async function main()
   // TODO(Trevor.Sundberg): Run tests.
 }
 
-main();
+const command = process.argv[2];
+switch (command)
+{
+case 'install':
+  install();
+  break;
+case 'build':
+  build();
+  break;
+default:
+  console.error(`Invalid command '${command}'`);
+  break;
+}
