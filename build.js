@@ -21,6 +21,25 @@ const platform = (() =>
   }
 })();
 
+function addPath(directory)
+{
+  process.env.PATH += `;${directory}`;
+}
+
+function setupEnvironment()
+{
+  switch (platform)
+  {
+  case 'windows':
+    addPath('C:/Program Files/LLVM/bin');
+    addPath('C:/Program Files/doxygen/bin');
+    addPath('C:/Program Files/CMake/bin');
+    break;
+  default:
+    console.error(`setupEnvironment: Unhandled platform ${platform}`);
+  }
+}
+
 async function checkCommand(command)
 {
   try
@@ -115,7 +134,7 @@ async function installProgram(info)
   }
   else
   {
-    console.error(`Platform ${platform} not supported for ${info.name}`);
+    console.error(`installProgram: Unhandled platform ${platform} for ${info.name}`);
   }
 }
 
@@ -342,7 +361,7 @@ async function runBuild(dirs)
     }
     break;
   default:
-    console.error('runBuild: Unhandled platform');
+    console.error(`runBuild: Unhandled platform ${platform}`);
   }
 }
 
@@ -368,6 +387,7 @@ async function build()
   // TODO(Trevor.Sundberg): Run tests.
 }
 
+setupEnvironment();
 const command = process.argv[2];
 switch (command)
 {
@@ -381,5 +401,3 @@ default:
   console.error(`Invalid command '${command}'`);
   break;
 }
-
-console.log('DOXYGEN TEST', fs.existsSync('C:\\Program Files\\doxygen\\bin'));
