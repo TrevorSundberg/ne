@@ -40,7 +40,11 @@
     "tuple": "cpp",
     "vector": "cpp",
     "xhash": "cpp",
-    "functional": "cpp"
+    "functional": "cpp",
+    "ctime": "cpp",
+    "iomanip": "cpp",
+    "xlocmon": "cpp",
+    "xloctime": "cpp"
   },
   "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
   "files.eol": "\n",

@@ -50,6 +50,7 @@ struct test_table
 };
 
 ne_core_bool test_validate(ne_core_bool value,
+                           uint64_t error_result,
                            const char *file,
                            int64_t line,
                            const char *message);
@@ -88,25 +89,26 @@ void test_run(test_table *table);
   table.supported = library_supported;                                         \
   table.permission = library_permission;                                       \
   table.simulated_environment = simulated_environment;                         \
-  table.expected_result = NE_CORE_RESULT_NOT_SET;                              \
+  table.expected_result = NE_CORE_RESULT_INVALID;                              \
   table.is_final_run = NE_CORE_FALSE;                                          \
   table.result = NE_CORE_NULL;                                                 \
   table.success = NE_CORE_TRUE;                                                \
   test_run(&table)
 
 #define TEST_EXPECT(expression)                                                \
-  NE_CORE_ENCLOSURE(table->success &=                                          \
-                    test_validate((expression), __FILE__, __LINE__,            \
-                                  "TEST_EXPECT failed\n");)
+  NE_CORE_ENCLOSURE(table->success &= test_validate(                           \
+                        (expression), NE_CORE_RESULT_INVALID, __FILE__,        \
+                        __LINE__, "TEST_EXPECT(" #expression ") failed\n");)
 
 #define TEST_CLEAR_RESULT()                                                    \
   NE_CORE_ENCLOSURE(if (table->result) *table->result =                        \
-                        NE_CORE_RESULT_NOT_SET;);
+                        NE_CORE_RESULT_INVALID;);
 
 #define TEST_EXPECT_RESULT(expected_result)                                    \
   NE_CORE_ENCLOSURE(if (table->result) table->success &= test_validate(        \
-                        *table->result == (expected_result), __FILE__,         \
-                        __LINE__, "TEST_EXPECT_RESULT failed\n");)
+                        *table->result == (expected_result), *table->result,   \
+                        __FILE__, __LINE__,                                    \
+                        "TEST_EXPECT_RESULT(" #expected_result ") failed\n");)
 
 #define TEST_DECLARE_PARAMETERS                                                \
   ne_core_bool *is_success_out, uint64_t *result, uint64_t expected_result,    \

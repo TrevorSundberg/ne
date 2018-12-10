@@ -104,7 +104,11 @@ typedef uint8_t ne_core_bool;
 #define NE_CORE_FALSE 0
 
 /// A permission id that will never be a valid permission.
-#define NE_CORE_INVALID_PERMISSION 0
+#define NE_CORE_PERMISSION_INVALID 0
+
+/// Only used for unit testing to set the result before calling a function.
+/// Using this value allows us to validate that the result was properly set.
+#define NE_CORE_RESULT_INVALID 0
 
 // typedef uint64_t ne_core_primitive_type;
 // static const ne_core_primitive_type ne_core_primitive_type_int8 = 0;
@@ -129,8 +133,9 @@ typedef uint8_t ne_core_bool;
 #if !defined(NDEBUG)
 /// Reports an error if a condition is false. Does not abort.
 #define NE_CORE_ASSERT(condition, text)                                        \
-  NE_CORE_ENCLOSURE(if (!(condition)) ne_core_error(NE_CORE_NULL, __FILE__,    \
-                                                    __LINE__, (text));)
+  NE_CORE_ENCLOSURE(if (!(condition))                                          \
+                        ne_core_error(NE_CORE_NULL, NE_CORE_RESULT_INVALID,    \
+                                      __FILE__, __LINE__, (text));)
 #else
 /// Reports an error if a condition is false. Does not abort.
 #define NE_CORE_ASSERT(condition, text)
@@ -357,10 +362,6 @@ extern int32_t ne_core_main(int32_t argc, char *argv[]);
 /// only when a dramatic internal error occurs.
 #define NE_CORE_RESULT_INTERNAL_ERROR 0x5bdb7f43fd650811
 
-/// Only used for unit testing to set the result before calling a function.
-/// Using this value allows us to validate that the result was properly set.
-#define NE_CORE_RESULT_NOT_SET 0x2dac613666331563
-
 /// An attempt to allocate memory failed because the system does not have enough
 /// memory or addressable space.
 #define NE_CORE_RESULT_ALLOCATION_FAILED 0xc1aa191cc1ccb51c
@@ -569,6 +570,9 @@ NE_CORE_API void (*ne_core_exit)(uint64_t *result, int32_t return_code);
 ///     The operation completed successfully.
 ///   - #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The package is not supported.
+/// @param error_result
+///   The result that caused the error. If the error was not caused by a result,
+///   use #NE_CORE_RESULT_INVALID.
 /// @param file
 ///   The name or path to the file the error occurred in (typically __FILE__).
 /// @param line
@@ -577,6 +581,7 @@ NE_CORE_API void (*ne_core_exit)(uint64_t *result, int32_t return_code);
 ///   A custom message that will be printed.
 /// @see #ne_core_tag_main_thread_only.
 NE_CORE_API void (*ne_core_error)(uint64_t *result,
+                                  uint64_t error_result,
                                   const char *file,
                                   int64_t line,
                                   const char *message);
