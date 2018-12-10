@@ -1,17 +1,18 @@
-trigger:
-- master
-
-pool:
-  vmImage: 'Ubuntu-16.04'
-
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
-- task: CMake@1
-- script: |
-    npm install
-    node build.js
-  displayName: 'Full build'
-  failOnStderr: true
+jobs:
+- job: Windows
+  pool:
+    vmImage: 'vs2017-win2016'
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '10.x'
+    displayName: 'Install Node.js'
+  - script: npm install
+    displayName: 'Npm Install'
+    failOnStderr: true
+  - script: node build.js install
+    displayName: 'Dependency Install'
+    failOnStderr: true
+  - script: node build.js build
+    displayName: 'Full build'
+    failOnStderr: true
