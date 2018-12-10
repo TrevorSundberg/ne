@@ -1,4 +1,5 @@
 # ne - Native Everywhere
+[![Build Status](https://dev.azure.com/TrevorSundberg/TrevorSundberg/_apis/build/status/TrevorSundberg.ne?branchName=master&jobName=Windows&label=Windows)](https://dev.azure.com/TrevorSundberg/TrevorSundberg/_build/latest?definitionId=1?branchName=master)
 
 **ne** is a standard specification, rather than a specific implementation. The standard includes:
 
