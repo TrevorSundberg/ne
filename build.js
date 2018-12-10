@@ -381,3 +381,5 @@ default:
   console.error(`Invalid command '${command}'`);
   break;
 }
+
+console.log('DOXYGEN TEST', fs.existsSync('C:\\Program Files\\doxygen\\bin'));
