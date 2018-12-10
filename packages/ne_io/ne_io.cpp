@@ -75,6 +75,9 @@ static uint64_t _input_read(uint64_t *result,
       DWORD events_peeked = 0;
       if (!PeekConsoleInputW(handle, &record, 1, &events_peeked))
       {
+        DWORD a = 0;
+        BOOL r = ReadFile(handle, buffer, (DWORD)size, &a, nullptr);
+
         NE_CORE_RESULT(NE_CORE_RESULT_ERROR);
         return bytes_read;
       }
@@ -193,7 +196,6 @@ static uint64_t _input_read(uint64_t *result,
     }
 
     // For FILE_TYPE_DISK we don't need to do anything since it doesn't block.
-
     DWORD amount = 0;
     if (ReadFile(handle, buffer, (DWORD)size, &amount, nullptr))
     {

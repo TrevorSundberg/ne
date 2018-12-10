@@ -3,6 +3,7 @@
 #include "../ne_core/ne_core.h"
 #include <cstdlib>
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
@@ -202,21 +203,30 @@ void (*ne_core_exit)(uint64_t *result, int32_t return_code) = &_ne_core_exit;
 
 /******************************************************************************/
 static void _ne_core_error(uint64_t *result,
+                           uint64_t error_result,
                            const char *file,
                            int64_t line,
                            const char *message)
 {
   NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
 
-  std::cerr << std::endl
-            << file << "(" << line << "): " << message << std::endl;
+  if (error_result != NE_CORE_RESULT_INVALID)
+  {
+    std::cerr << std::endl << file << "(" << line << "): error 0x";
+    std::ios_base::fmtflags format(std::cerr.flags());
+    std::cerr << std::setfill('0') << std::setw(16) << std::hex << error_result;
+    std::cerr.flags(format);
+    std::cerr << ": " << message << std::endl;
+  }
+  else
+  {
+    std::cerr << std::endl
+              << file << "(" << line << "): " << message << std::endl;
+  }
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
-
-#if defined(NE_CORE_PLATFORM_WINDOWS)
-  __debugbreak();
-#endif
 }
 void (*ne_core_error)(uint64_t *result,
+                      uint64_t error_result,
                       const char *file,
                       int64_t line,
                       const char *message) = &_ne_core_error;

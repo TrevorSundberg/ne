@@ -103,5 +103,5 @@ static void exit_tests(test_table *table)
 
 void test_core(ne_core_bool simulated_environment)
 {
-  TEST_RUN(ne_core_supported, NE_CORE_INVALID_PERMISSION);
+  TEST_RUN(ne_core_supported, NE_CORE_PERMISSION_INVALID);
 }

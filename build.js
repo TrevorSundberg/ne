@@ -5,7 +5,6 @@ const fs = require('fs');
 const glob = require('glob');
 const os = require('os');
 const commandExists = require('command-exists');
-const tempy = require('tempy');
 const request = require('request');
 
 const platform = (() =>
@@ -19,6 +18,28 @@ const platform = (() =>
   default:
     return 'linux';
   }
+})();
+
+function makeDir(dirPath)
+{
+  mkdirp.sync(dirPath, {
+    recursive: true
+  });
+  return dirPath;
+}
+
+const dirs = (() =>
+{
+  // Ensuring all directories exist just makes everything easier.
+  const rootDir = process.cwd();
+  return {
+    root: rootDir,
+    packages: path.join(rootDir, 'packages'),
+    tempBuild: makeDir(path.join(rootDir, 'temp_build')),
+    tempDownload: makeDir(path.join(rootDir, 'temp_download')),
+    tempDoxygen: makeDir(path.join(rootDir, 'temp_doxygen')),
+    tempTest: makeDir(path.join(rootDir, 'temp_test')),
+  };
 })();
 
 function addPath(directory)
@@ -63,12 +84,12 @@ async function verifyCommand(command)
   return true;
 }
 
-function download(url, fileName)
+function download(url, filePath)
 {
   console.log(`Downloading '${url}'`);
   return new Promise((resolve) =>
   {
-    const file = fs.createWriteStream(fileName);
+    const file = fs.createWriteStream(filePath);
 
     request(url)
       .on('error', console.error)
@@ -85,10 +106,38 @@ function download(url, fileName)
 
 async function downloadTemp(url, fileName)
 {
-  const filePath = tempy.file({
-    name: fileName
-  });
+  const filePath = path.join(dirs.tempDownload, fileName);
+  if (fs.existsSync(filePath))
+  {
+    try
+    {
+      fs.unlink(filePath);
+    }
+    catch (err)
+    {
+      console.error(err);
+    }
+  }
+
   await download(url, filePath);
+
+  // On Windows, the file is locked after it completes downloading.
+  // This may be a result of a virus scanner or other process.
+  for (;;)
+  {
+    let file = 0;
+    try
+    {
+      file = fs.openSync(filePath, 'r');
+    }
+    catch (err)
+    {
+      continue;
+    }
+
+    fs.closeSync(file);
+    break;
+  }
   return filePath;
 }
 
@@ -177,16 +226,6 @@ function installCmake()
   });
 }
 
-function gatherDirectories()
-{
-  const rootDir = process.cwd();
-  return {
-    root: rootDir,
-    packages: path.join(rootDir, 'packages'),
-    build: path.join(rootDir, 'build'),
-  };
-}
-
 function safeDeleteFile(filePath)
 {
   try
@@ -199,7 +238,7 @@ function safeDeleteFile(filePath)
   }
 }
 
-function gatherSourceFiles(dirs)
+function gatherSourceFiles()
 {
   // Gather all .c, .cpp, and .h files.
   return glob.sync('**/*.@(c|cpp|h)', {
@@ -207,7 +246,7 @@ function gatherSourceFiles(dirs)
   });
 }
 
-async function runEslint(dirs)
+async function runEslint()
 {
   const eslintOptions = {
     cwd: dirs.root,
@@ -221,7 +260,7 @@ async function runEslint(dirs)
   }
 }
 
-async function runClangTidy(dirs, sourceFiles)
+async function runClangTidy(sourceFiles)
 {
   if (!await verifyCommand('clang-tidy'))
   {
@@ -246,7 +285,7 @@ async function runClangTidy(dirs, sourceFiles)
   }
 }
 
-async function runClangFormat(dirs, sourceFiles)
+async function runClangFormat(sourceFiles)
 {
   if (!await verifyCommand('clang-format'))
   {
@@ -281,7 +320,7 @@ async function runClangFormat(dirs, sourceFiles)
   }
 }
 
-async function runDoxygen(dirs)
+async function runDoxygen()
 {
   if (!await verifyCommand('doxygen'))
   {
@@ -296,7 +335,7 @@ async function runDoxygen(dirs)
   await execa('doxygen', [], doxygenOptions);
 }
 
-async function runCmake(dirs)
+async function runCmake()
 {
   if (!await verifyCommand('cmake'))
   {
@@ -304,18 +343,16 @@ async function runCmake(dirs)
   }
 
   const cmakeOptions = {
-    cwd: dirs.build,
+    cwd: dirs.tempBuild,
     stdio: ['ignore', 'ignore', 'inherit'],
     reject: false
   };
-  mkdirp.sync(dirs.build, {
-    recursive: true
-  });
   await execa('cmake', ['..'], cmakeOptions);
 }
 
-async function runBuild(dirs)
+async function runBuild()
 {
+  const testPaths = [];
   switch (platform)
   {
   case 'windows':
@@ -330,24 +367,24 @@ async function runBuild(dirs)
       if (!result.stdout)
       {
         console.error('No output from vswhere.exe');
-        return;
+        break;
       }
       const devenvPath = /productPath: (.*)/g.exec(result.stdout)[1];
       if (!devenvPath)
       {
         console.error('No "productPath" from vswhere.exe');
-        return;
+        break;
       }
 
-      const logPath = path.join(dirs.build, 'output.log');
+      const logPath = path.join(dirs.tempBuild, 'output.log');
       safeDeleteFile(logPath);
 
       const devenvOptions = {
-        cwd: dirs.build,
+        cwd: dirs.tempBuild,
         stdio: ['ignore', 'ignore', 'inherit'],
         reject: false
       };
-      const args = [path.join(dirs.build, 'ne.sln'), '/build', 'Debug', '/out', logPath];
+      const args = [path.join(dirs.tempBuild, 'ne.sln'), '/build', 'Debug', '/out', logPath];
       await execa(devenvPath, args, devenvOptions);
       const log = fs.readFileSync(logPath, {
         encoding: 'utf8'
@@ -357,11 +394,52 @@ async function runBuild(dirs)
       if (!log.match(/, 0 failed,/g))
       {
         console.error(log);
+        break;
       }
+
+      testPaths.push(path.join(dirs.tempBuild, 'Debug', 'ne.exe'));
     }
     break;
   default:
     console.error(`runBuild: Unhandled platform ${platform}`);
+  }
+  return testPaths;
+}
+
+async function runTests(testPaths)
+{
+  // TODO(Trevor.Sundberg): ne_io_input read test fails if we don't specify 'inherit' for stdin.
+  for (const testPath of testPaths)
+  {
+    const inputPath = path.join(dirs.packages, 'test_io', 'input.txt');
+    const outputPath = path.join(dirs.tempTest, 'output.txt');
+
+    const input = fs.openSync(inputPath, 'r');
+    const output = fs.openSync(outputPath, 'w');
+
+    const options = {
+      cwd: path.dirname(testPath),
+      stdio: [input, output, 'inherit'],
+      reject: false
+    };
+    await execa(testPath, ['--simulated'], options);
+
+    fs.closeSync(input);
+    fs.closeSync(output);
+
+    const inputText = fs.readFileSync(inputPath, {
+      encoding: 'utf8'
+    });
+    const outputText = fs.readFileSync(outputPath, {
+      encoding: 'utf8'
+    });
+
+    // Due to the ne_core_hello_world, we can't expect a specific output, but
+    // we know that ne_io_output tests are called after ne_core_hello_world.
+    if (inputText.endsWith(outputText))
+    {
+      console.error(`Standard output does not match: '${outputText}'`);
+    }
   }
 }
 
@@ -374,19 +452,18 @@ async function install()
 
 async function build()
 {
-  const dirs = gatherDirectories();
-  await runEslint(dirs);
+  await runEslint();
   // TODO(Trevor.Sundberg): Run cmake_format.
-  const sourceFiles = gatherSourceFiles(dirs);
-  await runClangTidy(dirs, sourceFiles);
-  await runClangFormat(dirs, sourceFiles);
+  const sourceFiles = gatherSourceFiles();
+  await runClangTidy(sourceFiles);
+  await runClangFormat(sourceFiles);
   // TODO(Trevor.Sundberg): Run cppcheck.
   // TODO(Trevor.Sundberg): Run cpplint.
-  await runDoxygen(dirs);
+  await runDoxygen();
   // TODO(Trevor.Sundberg): Run moxygen.
-  await runCmake(dirs);
-  await runBuild(dirs);
-  // TODO(Trevor.Sundberg): Run tests.
+  await runCmake();
+  const testPaths = await runBuild();
+  await runTests(testPaths);
 }
 
 setupEnvironment();

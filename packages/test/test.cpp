@@ -8,13 +8,14 @@
 #define TEST_RANDOM_SEED 123456789ULL
 
 ne_core_bool test_validate(ne_core_bool value,
+                           uint64_t error_result,
                            const char *file,
                            int64_t line,
                            const char *message)
 {
   if (value != NE_CORE_TRUE)
   {
-    ne_core_error(nullptr, file, line, message);
+    ne_core_error(nullptr, error_result, file, line, message);
   }
 
   // Return the value right back out so we can use it in an or statement.
@@ -559,7 +560,7 @@ static void test_all(test_table *table)
 
   if (supported != NE_CORE_FALSE)
   {
-    if (table->permission != NE_CORE_INVALID_PERMISSION)
+    if (table->permission != NE_CORE_PERMISSION_INVALID)
     {
       // To test permissions, the core must be supported.
       TEST_EXPECT(ne_core_supported(nullptr) == NE_CORE_TRUE);
@@ -586,7 +587,7 @@ static void test_all(test_table *table)
   }
   else
   {
-    if (table->permission != NE_CORE_INVALID_PERMISSION)
+    if (table->permission != NE_CORE_PERMISSION_INVALID)
     {
       // To test permissions, the core must be supported.
       TEST_EXPECT(ne_core_supported(nullptr) == NE_CORE_TRUE);
@@ -626,7 +627,7 @@ void test_run(test_table *table)
 
   table->success = NE_CORE_TRUE;
   table->is_final_run = NE_CORE_FALSE;
-  uint64_t result = NE_CORE_RESULT_NOT_SET;
+  uint64_t result = NE_CORE_RESULT_INVALID;
   table->result = &result;
 
   // Test everything with a valid result pointer.
