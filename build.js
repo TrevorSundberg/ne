@@ -380,6 +380,8 @@ async function build()
   const sourceFiles = gatherSourceFiles(dirs);
   await runClangTidy(dirs, sourceFiles);
   await runClangFormat(dirs, sourceFiles);
+  // TODO(Trevor.Sundberg): Run cppcheck.
+  // TODO(Trevor.Sundberg): Run cpplint.
   await runDoxygen(dirs);
   // TODO(Trevor.Sundberg): Run moxygen.
   await runCmake(dirs);
