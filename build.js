@@ -260,6 +260,7 @@ function gatherSourceFiles()
 
 async function runEslint()
 {
+  console.log('Running Eslint');
   const eslintOptions = {
     cwd: dirs.root,
     stdio: ['ignore', 'pipe', 'inherit'],
@@ -274,6 +275,7 @@ async function runEslint()
 
 async function runClangTidy(sourceFiles)
 {
+  console.log('Running Clang Tidy');
   if (!await verifyCommand('clang-tidy'))
   {
     return;
@@ -299,6 +301,7 @@ async function runClangTidy(sourceFiles)
 
 async function runClangFormat(sourceFiles)
 {
+  console.log('Running Clang Format');
   if (!await verifyCommand('clang-format'))
   {
     return;
@@ -334,6 +337,7 @@ async function runClangFormat(sourceFiles)
 
 async function runDoxygen()
 {
+  console.log('Running Doxygen');
   if (!await verifyCommand('doxygen'))
   {
     return;
@@ -349,6 +353,7 @@ async function runDoxygen()
 
 async function runCmake()
 {
+  console.log('Running Cmake');
   if (!await verifyCommand('cmake'))
   {
     return;
@@ -364,6 +369,7 @@ async function runCmake()
 
 async function runBuild()
 {
+  console.log('Running Build');
   const testPaths = [];
   switch (platform)
   {
@@ -420,6 +426,7 @@ async function runBuild()
 
 async function runTests(testPaths)
 {
+  console.log('Running Tests');
   // TODO(Trevor.Sundberg): ne_io_input read test fails if we don't specify 'inherit' for stdin.
   for (const testPath of testPaths)
   {
