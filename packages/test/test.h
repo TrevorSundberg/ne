@@ -105,10 +105,13 @@ void test_run(test_table *table);
                         NE_CORE_RESULT_INVALID;);
 
 #define TEST_EXPECT_RESULT(expected_result)                                    \
-  NE_CORE_ENCLOSURE(if (table->result) table->success &= test_validate(        \
-                        *table->result == (expected_result), *table->result,   \
-                        __FILE__, __LINE__,                                    \
-                        "TEST_EXPECT_RESULT(" #expected_result ") failed\n");)
+  NE_CORE_ENCLOSURE(if (table->result) {                                       \
+    table->success &= test_validate(                                           \
+        *table->result == (expected_result), *table->result, __FILE__,         \
+        __LINE__, "TEST_EXPECT_RESULT(" #expected_result ") failed\n");        \
+  })
+
+#define TEST_EXPECT_TABLE_RESULT() TEST_EXPECT_RESULT(table->expected_result)
 
 #define TEST_DECLARE_PARAMETERS                                                \
   ne_core_bool *is_success_out, uint64_t *result, uint64_t expected_result,    \

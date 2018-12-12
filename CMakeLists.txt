@@ -24,12 +24,16 @@ add_executable(
   packages/ne_core/ne_intrinsic.cpp
   packages/ne_io/ne_io.h
   packages/ne_io/ne_io.cpp
+  packages/ne_time/ne_time.h
+  packages/ne_time/ne_time.cpp
   packages/test/test.h
   packages/test/test.cpp
   packages/test_core/test_core.h
   packages/test_core/test_core.cpp
   packages/test_io/test_io.h
   packages/test_io/test_io.cpp
+  packages/test_time/test_time.h
+  packages/test_time/test_time.cpp
 )
 
 #target_include_directories(ne directory...)

@@ -1,4 +1,4 @@
-const execa = require('execa');
+const standardExeca = require('execa');
 const path = require('path');
 const mkdirp = require('mkdirp');
 const fs = require('fs');
@@ -61,6 +61,35 @@ function setupEnvironment()
   }
 }
 
+function sleep(ms)
+{
+  return new Promise(resolve =>
+  {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function execa(...args)
+{
+  let lastErr = '';
+  // On Windows, a file may be locked after it completes downloading.
+  // This may be a result of a virus scanner or other process.
+  for (let attempts = 100; attempts >= 0; --attempts)
+  {
+    try
+    {
+      return await standardExeca(...args);
+    }
+    catch (err)
+    {
+      lastErr = err;
+      await sleep(1000);
+    }
+  }
+  console.error(lastErr);
+  return null;
+}
+
 async function checkCommand(command)
 {
   try
@@ -121,23 +150,6 @@ async function downloadTemp(url, fileName)
 
   await download(url, filePath);
 
-  // On Windows, the file is locked after it completes downloading.
-  // This may be a result of a virus scanner or other process.
-  for (;;)
-  {
-    let file = 0;
-    try
-    {
-      file = fs.openSync(filePath, 'r');
-    }
-    catch (err)
-    {
-      continue;
-    }
-
-    fs.closeSync(file);
-    break;
-  }
   return filePath;
 }
 

@@ -3,6 +3,6 @@
     major: 0
     minor: 0
 - dependency:
-    name: ne_timer
+    name: ne_time
     major: 0
     minor: 0
