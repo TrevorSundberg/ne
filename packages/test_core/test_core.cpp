@@ -26,7 +26,7 @@ static void full_tests(test_table *table)
 {
   TEST_CLEAR_RESULT();
   void *allocation = ne_core_allocate(table->result, 1);
-  TEST_EXPECT_RESULT(table->expected_result);
+  TEST_EXPECT_TABLE_RESULT();
   TEST_EXPECT(allocation != nullptr);
 
   // Write a single byte to the allocated memory to ensure it's writable.
@@ -37,7 +37,7 @@ static void full_tests(test_table *table)
 
   TEST_CLEAR_RESULT();
   ne_core_free(table->result, allocation);
-  TEST_EXPECT_RESULT(table->expected_result);
+  TEST_EXPECT_TABLE_RESULT();
 
   // Allocate something so large that we expect it to fail.
   TEST_CLEAR_RESULT();
@@ -68,26 +68,26 @@ static void null_tests(test_table *table)
 {
   TEST_CLEAR_RESULT();
   TEST_EXPECT(ne_core_allocate(table->result, 1) == nullptr);
-  TEST_EXPECT_RESULT(table->expected_result);
+  TEST_EXPECT_TABLE_RESULT();
 
   TEST_CLEAR_RESULT();
   ne_core_free(table->result, nullptr);
-  TEST_EXPECT_RESULT(table->expected_result);
+  TEST_EXPECT_TABLE_RESULT();
 }
 
 static void shared_tests(test_table *table)
 {
   TEST_CLEAR_RESULT();
   ne_core_hello_world(table->result);
-  TEST_EXPECT_RESULT(table->expected_result);
+  TEST_EXPECT_TABLE_RESULT();
 
   TEST_CLEAR_RESULT();
   ne_core_on_exit(table->result, &test_exit_callback, table);
-  TEST_EXPECT_RESULT(table->expected_result);
+  TEST_EXPECT_TABLE_RESULT();
 
   TEST_CLEAR_RESULT();
   ne_core_request_frame(table->result, &test_frame_callback, table);
-  TEST_EXPECT_RESULT(table->expected_result);
+  TEST_EXPECT_TABLE_RESULT();
 
   // We can't test these functions or call them for coverage because doing so
   // would cause the tests to fail (or exit prematurely).

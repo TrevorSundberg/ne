@@ -142,7 +142,7 @@ void test_stream(ne_core_stream *stream,
     // We expect the stream not to be terminated from the start.
     TEST_CLEAR_RESULT();
     ne_core_bool terminated = stream->is_terminated(table->result, stream);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
     TEST_EXPECT(!terminated);
   }
 
@@ -152,7 +152,7 @@ void test_stream(ne_core_stream *stream,
     // Get the position of the stream to verify that it starts at 0.
     TEST_CLEAR_RESULT();
     uint64_t position = stream->get_position(table->result, stream);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
     TEST_EXPECT(position == 0);
   }
 
@@ -165,7 +165,7 @@ void test_stream(ne_core_stream *stream,
     {
       TEST_CLEAR_RESULT();
       position = stream->get_position(table->result, stream);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
     }
 
     // Initialize with random noise and read.
@@ -173,7 +173,7 @@ void test_stream(ne_core_stream *stream,
     TEST_CLEAR_RESULT();
     uint64_t amount1 = stream->read(table->result, stream, buffer1,
                                     TEST_SIMULATED_SIZE, blocking);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
 
     // Make sure some of the random data was overwritten.
     if (amount1 != 0)
@@ -194,7 +194,7 @@ void test_stream(ne_core_stream *stream,
     {
       TEST_CLEAR_RESULT();
       uint64_t new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
       TEST_EXPECT((new_position - position) == amount1);
     }
 
@@ -204,14 +204,14 @@ void test_stream(ne_core_stream *stream,
       TEST_CLEAR_RESULT();
       stream->seek(table->result, stream, ne_core_stream_seek_origin_begin,
                    position);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
 
       // Verify that the position is the same.
       if (stream->get_position != nullptr)
       {
         TEST_CLEAR_RESULT();
         uint64_t new_position = stream->get_position(table->result, stream);
-        TEST_EXPECT_RESULT(table->expected_result);
+        TEST_EXPECT_TABLE_RESULT();
         TEST_EXPECT(new_position == position);
       }
 
@@ -220,7 +220,7 @@ void test_stream(ne_core_stream *stream,
       TEST_CLEAR_RESULT();
       uint64_t amount2 = stream->read(table->result, stream, buffer2,
                                       TEST_SIMULATED_SIZE, blocking);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
 
       // We should have read the exact same thing.
       TEST_EXPECT(amount1 == amount2);
@@ -230,7 +230,7 @@ void test_stream(ne_core_stream *stream,
       TEST_CLEAR_RESULT();
       stream->seek(table->result, stream, ne_core_stream_seek_origin_begin,
                    position);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
     }
   }
 
@@ -243,7 +243,7 @@ void test_stream(ne_core_stream *stream,
     {
       TEST_CLEAR_RESULT();
       position = stream->get_position(table->result, stream);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
     }
 
     // Write data to the stream.
@@ -251,14 +251,14 @@ void test_stream(ne_core_stream *stream,
     uint64_t amount1 =
         stream->write(table->result, stream, TEST_SIMULATED_STREAM,
                       TEST_SIMULATED_SIZE, blocking);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
 
     // If we have the ability to flush, call it now.
     if (stream->flush != nullptr)
     {
       TEST_CLEAR_RESULT();
       stream->flush(table->result, stream);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
     }
 
     // Verify that the position was advanced as far as the write said.
@@ -266,7 +266,7 @@ void test_stream(ne_core_stream *stream,
     {
       TEST_CLEAR_RESULT();
       uint64_t new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
       TEST_EXPECT((new_position - position) == amount1);
     }
 
@@ -277,14 +277,14 @@ void test_stream(ne_core_stream *stream,
       TEST_CLEAR_RESULT();
       stream->seek(table->result, stream, ne_core_stream_seek_origin_begin,
                    position);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
 
       // Verify that the position is the same.
       if (stream->get_position != nullptr)
       {
         TEST_CLEAR_RESULT();
         uint64_t new_position = stream->get_position(table->result, stream);
-        TEST_EXPECT_RESULT(table->expected_result);
+        TEST_EXPECT_TABLE_RESULT();
         TEST_EXPECT(new_position == position);
       }
 
@@ -293,7 +293,7 @@ void test_stream(ne_core_stream *stream,
       TEST_CLEAR_RESULT();
       uint64_t amount2 = stream->read(table->result, stream, buffer2,
                                       TEST_SIMULATED_SIZE, blocking);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
 
       // We should have read the exact same thing.
       TEST_EXPECT(amount1 == amount2);
@@ -304,7 +304,7 @@ void test_stream(ne_core_stream *stream,
       TEST_CLEAR_RESULT();
       stream->seek(table->result, stream, ne_core_stream_seek_origin_begin,
                    position);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
     }
   }
 
@@ -315,7 +315,7 @@ void test_stream(ne_core_stream *stream,
     // coverage.
     TEST_CLEAR_RESULT();
     stream->flush(table->result, stream);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
   }
 
   // Test get_size.
@@ -323,7 +323,7 @@ void test_stream(ne_core_stream *stream,
   {
     TEST_CLEAR_RESULT();
     uint64_t size = stream->get_size(table->result, stream);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
 
     if (table->simulated_environment != NE_CORE_FALSE)
     {
@@ -337,13 +337,13 @@ void test_stream(ne_core_stream *stream,
     // Call these for coverage. We'll test them below if we have get_position.
     TEST_CLEAR_RESULT();
     stream->seek(table->result, stream, ne_core_stream_seek_origin_begin, 0);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
     TEST_CLEAR_RESULT();
     stream->seek(table->result, stream, ne_core_stream_seek_origin_current, 1);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
     TEST_CLEAR_RESULT();
     stream->seek(table->result, stream, ne_core_stream_seek_origin_end, 0);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
 
     // If we have get_position, we can do a lot more to verift the streams.
     if (stream->get_position != nullptr)
@@ -351,54 +351,54 @@ void test_stream(ne_core_stream *stream,
       // Beginning.
       TEST_CLEAR_RESULT();
       stream->seek(table->result, stream, ne_core_stream_seek_origin_begin, 0);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
 
       TEST_CLEAR_RESULT();
       uint64_t new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
       TEST_EXPECT(new_position == 0);
 
       // Beginning with positive offset.
       TEST_CLEAR_RESULT();
       stream->seek(table->result, stream, ne_core_stream_seek_origin_begin, 1);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
 
       TEST_CLEAR_RESULT();
       new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
       TEST_EXPECT(new_position == 1);
 
       // Beginning with negative offset (clamped).
       TEST_CLEAR_RESULT();
       stream->seek(table->result, stream, ne_core_stream_seek_origin_begin,
                    static_cast<uint64_t>(-1));
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
 
       TEST_CLEAR_RESULT();
       new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
       TEST_EXPECT(new_position == 0);
 
       // Current with positive offset.
       TEST_CLEAR_RESULT();
       stream->seek(table->result, stream, ne_core_stream_seek_origin_current,
                    1);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
 
       TEST_CLEAR_RESULT();
       new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
       TEST_EXPECT(new_position == 1);
 
       // Current with negative offset.
       TEST_CLEAR_RESULT();
       stream->seek(table->result, stream, ne_core_stream_seek_origin_current,
                    static_cast<uint64_t>(-1));
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
 
       TEST_CLEAR_RESULT();
       new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_RESULT(table->expected_result);
+      TEST_EXPECT_TABLE_RESULT();
       TEST_EXPECT(new_position == 0);
 
       // We can only test the end properly if we have get_size.
@@ -406,16 +406,16 @@ void test_stream(ne_core_stream *stream,
       {
         TEST_CLEAR_RESULT();
         uint64_t size = stream->get_size(table->result, stream);
-        TEST_EXPECT_RESULT(table->expected_result);
+        TEST_EXPECT_TABLE_RESULT();
 
         // End.
         TEST_CLEAR_RESULT();
         stream->seek(table->result, stream, ne_core_stream_seek_origin_end, 0);
-        TEST_EXPECT_RESULT(table->expected_result);
+        TEST_EXPECT_TABLE_RESULT();
 
         TEST_CLEAR_RESULT();
         new_position = stream->get_position(table->result, stream);
-        TEST_EXPECT_RESULT(table->expected_result);
+        TEST_EXPECT_TABLE_RESULT();
         TEST_EXPECT(new_position == size);
 
         // End with negative offset.
@@ -424,11 +424,11 @@ void test_stream(ne_core_stream *stream,
           TEST_CLEAR_RESULT();
           stream->seek(table->result, stream, ne_core_stream_seek_origin_end,
                        static_cast<uint64_t>(-1));
-          TEST_EXPECT_RESULT(table->expected_result);
+          TEST_EXPECT_TABLE_RESULT();
 
           TEST_CLEAR_RESULT();
           new_position = stream->get_position(table->result, stream);
-          TEST_EXPECT_RESULT(table->expected_result);
+          TEST_EXPECT_TABLE_RESULT();
 
           TEST_EXPECT(new_position == (size - 1));
         }
@@ -436,11 +436,11 @@ void test_stream(ne_core_stream *stream,
         // End with positive offset (clamped).
         TEST_CLEAR_RESULT();
         stream->seek(table->result, stream, ne_core_stream_seek_origin_end, 1);
-        TEST_EXPECT_RESULT(table->expected_result);
+        TEST_EXPECT_TABLE_RESULT();
 
         TEST_CLEAR_RESULT();
         new_position = stream->get_position(table->result, stream);
-        TEST_EXPECT_RESULT(table->expected_result);
+        TEST_EXPECT_TABLE_RESULT();
         TEST_EXPECT(new_position == size);
       }
     }
@@ -449,7 +449,7 @@ void test_stream(ne_core_stream *stream,
     // Note that this only happens if we support seek.
     TEST_CLEAR_RESULT();
     stream->seek(table->result, stream, ne_core_stream_seek_origin_begin, 0);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
   }
 
   // Test free (optionally).
@@ -457,7 +457,7 @@ void test_stream(ne_core_stream *stream,
   {
     TEST_CLEAR_RESULT();
     stream->free(table->result, stream);
-    TEST_EXPECT_RESULT(table->expected_result);
+    TEST_EXPECT_TABLE_RESULT();
   }
 }
 
@@ -651,8 +651,10 @@ int32_t ne_core_main(int32_t argc, char *argv[])
   // register tests (dependency upon test) then  we must do this.
   extern void test_core(ne_core_bool simulated_environment);
   extern void test_io(ne_core_bool simulated_environment);
+  extern void test_time(ne_core_bool simulated_environment);
   test_core(simulated_environment);
   test_io(simulated_environment);
+  test_time(simulated_environment);
 
   // We can't know whether the test completed by this point do to callbacks.
   return 0;

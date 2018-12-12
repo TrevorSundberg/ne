@@ -44,7 +44,9 @@
     "ctime": "cpp",
     "iomanip": "cpp",
     "xlocmon": "cpp",
-    "xloctime": "cpp"
+    "xloctime": "cpp",
+    "chrono": "cpp",
+    "ratio": "cpp"
   },
   "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
   "files.eol": "\n",

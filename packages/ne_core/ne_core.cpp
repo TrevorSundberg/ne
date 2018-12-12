@@ -210,19 +210,12 @@ static void _ne_core_error(uint64_t *result,
 {
   NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
 
-  if (error_result != NE_CORE_RESULT_INVALID)
-  {
-    std::cerr << std::endl << file << "(" << line << "): error 0x";
-    std::ios_base::fmtflags format(std::cerr.flags());
-    std::cerr << std::setfill('0') << std::setw(16) << std::hex << error_result;
-    std::cerr.flags(format);
-    std::cerr << ": " << message << std::endl;
-  }
-  else
-  {
-    std::cerr << std::endl
-              << file << "(" << line << "): " << message << std::endl;
-  }
+  std::cerr << std::endl << file << "(" << line << "): error 0x";
+  std::ios_base::fmtflags format(std::cerr.flags());
+  std::cerr << std::setfill('0') << std::setw(16) << std::hex << error_result;
+  std::cerr.flags(format);
+  std::cerr << ": " << message << std::endl;
+
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 }
 void (*ne_core_error)(uint64_t *result,
