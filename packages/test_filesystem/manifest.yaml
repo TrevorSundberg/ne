@@ -1,5 +1,5 @@
 - dependency:
-    name: test_core
+    name: test
     major: 0
     minor: 0
 - dependency:

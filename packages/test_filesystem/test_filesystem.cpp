@@ -1,6 +1,6 @@
-// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
+/// @file
+/// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test_filesystem/test_filesystem.h"
-
 
 /*
 // Test writing to a file multiple times.

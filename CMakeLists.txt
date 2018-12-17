@@ -26,6 +26,8 @@ add_executable(
   packages/ne_io/ne_io.cpp
   packages/ne_time/ne_time.h
   packages/ne_time/ne_time.cpp
+  packages/ne_filesystem/ne_filesystem.h
+  packages/ne_filesystem/ne_filesystem.cpp
   packages/test/test.h
   packages/test/test.cpp
   packages/test_core/test_core.h
@@ -34,6 +36,8 @@ add_executable(
   packages/test_io/test_io.cpp
   packages/test_time/test_time.h
   packages/test_time/test_time.cpp
+  packages/test_filesystem/test_filesystem.h
+  packages/test_filesystem/test_filesystem.cpp
 )
 
 #target_include_directories(ne directory...)

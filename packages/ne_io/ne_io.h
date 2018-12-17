@@ -21,9 +21,10 @@ NE_CORE_API ne_core_bool (*ne_io_supported)(uint64_t *result);
 /// application, or other source. When data is read from a terminal it will
 /// always be in UTF-8 format. All other sources will be read directly as
 /// binary with no translation.
-/// When using non-blocking read, if the input comes from a terminal:
-///  - Pressing enter/return will always result in a single '\\r' character.
-///  - Characters typed in the terminal will not be visible.
+/// When using non-blocking read, if the input comes from a terminal then
+/// pressing enter/return will always result in a single '\\r' character and
+/// characters typed in the terminal will not be visible.
+///   - #ne_core_tag_main_thread_only.
 /// @param result
 ///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
@@ -33,7 +34,6 @@ NE_CORE_API ne_core_bool (*ne_io_supported)(uint64_t *result);
 ///   Outputs the created stream with the following operations:
 ///   - \ref ne_core_stream.read.
 ///   - \ref ne_core_stream.free.
-/// @see #ne_core_tag_main_thread_only.
 NE_CORE_API void (*ne_io_get_input)(uint64_t *result,
                                     ne_core_stream *stream_out);
 
@@ -42,6 +42,7 @@ NE_CORE_API void (*ne_io_get_input)(uint64_t *result,
 /// application, or other destination. When data is written to a terminal it
 /// will always be in UTF-8 format. All other desitinations will be written
 /// directly as binary with no translation.
+///   - #ne_core_tag_main_thread_only.
 /// @param result
 ///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
@@ -52,7 +53,6 @@ NE_CORE_API void (*ne_io_get_input)(uint64_t *result,
 ///   - \ref ne_core_stream.write.
 ///   - \ref ne_core_stream.flush.
 ///   - \ref ne_core_stream.free.
-/// @see #ne_core_tag_main_thread_only.
 NE_CORE_API void (*ne_io_get_output)(uint64_t *result,
                                      ne_core_stream *stream_out);
 
@@ -61,6 +61,7 @@ NE_CORE_API void (*ne_io_get_output)(uint64_t *result,
 /// piped to a file, socket, application, or other destination. When data is
 /// written to a terminal it will always be in UTF-8 format. All other
 /// desitinations will be written directly as binary with no translation.
+///   - #ne_core_tag_main_thread_only.
 /// @param result
 ///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
@@ -71,6 +72,5 @@ NE_CORE_API void (*ne_io_get_output)(uint64_t *result,
 ///   - \ref ne_core_stream.write.
 ///   - \ref ne_core_stream.flush.
 ///   - \ref ne_core_stream.free.
-/// @see #ne_core_tag_main_thread_only.
 NE_CORE_API void (*ne_io_get_error)(uint64_t *result,
                                     ne_core_stream *stream_out);

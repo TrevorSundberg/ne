@@ -31,7 +31,7 @@ NE_CORE_API ne_core_bool (*ne_time_supported)(uint64_t *result);
 ///   The number of nanoseconds since the UNIX epoch.
 NE_CORE_API uint64_t (*ne_time_system)(uint64_t *result);
 
-/// Represents the highest frequency clock monotonic time in nanoseconds that
+/// Represents the highest frequency monotonic time in nanoseconds that
 /// may NOT change due to external events (must never decrease). The initial
 /// value of the timer is not guaranteed, as this timer is primarily to be used
 /// for durations.

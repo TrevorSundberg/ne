@@ -2,7 +2,6 @@
 #pragma once
 #include "../ne_core/ne_core.h"
 
-
 NE_CORE_DECLARE_PACKAGE(ne_window, 0, 0);
 
 typedef struct ne_window ne_window;
@@ -90,4 +89,42 @@ NE_CORE_API void (*ne_window_set_opacity)(uint64_t *result, float opacity);
 NE_CORE_API float (*ne_window_get_progress)(uint64_t *result);
 NE_CORE_API void (*ne_window_set_progress)(uint64_t *result, float progress);
 
+typedef enum ne_window_file_dialog_mode NE_CORE_ENUM
+{
+  ne_window_file_dialog_mode_save = 0,
+  ne_window_file_dialog_mode_open = 1,
+  ne_window_file_dialog_mode_count = 2,
 
+  ne_window_file_dialog_mode_max = 3,
+  ne_window_file_dialog_mode_force_size = 0x7FFFFFFF
+} ne_window_file_dialog_mode;
+
+typedef enum ne_window_file_dialog_type NE_CORE_ENUM
+{
+  ne_window_file_dialog_type_file = 0,
+  ne_window_file_dialog_type_directory = 1,
+  ne_window_file_dialog_type_count = 2,
+
+  ne_window_file_dialog_type_max = 3,
+  ne_window_file_dialog_type_force_size = 0x7FFFFFFF
+} ne_window_file_dialog_type;
+
+typedef struct ne_window_file_dialog_config ne_window_file_dialog_config;
+/// Configures an operating system specific dialog to allow users to select
+/// files or directories.
+struct ne_window_file_dialog_config
+{
+  // Uses the '*' wildcard notation as well as separating '\n' for multiple
+  // types.
+  const char *filter;
+
+  // .
+  const char *starting_path;
+  ne_core_bool multi_select;
+  ne_window_file_dialog_mode mode;
+  ne_window_file_dialog_type type;
+};
+
+// Show a file dialog for opening or saving files.
+NE_CORE_API const char *(*ne_window_file_dialog)(
+    uint64_t *result, const ne_window_file_dialog_config *config);
