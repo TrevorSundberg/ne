@@ -71,11 +71,13 @@ int64_t test_string_compare(const char *a, const char *b)
   }
 }
 
-int64_t test_memory_compare_value(void *memory, uint8_t value, uint64_t size)
+int64_t test_memory_compare_value(const void *memory,
+                                  uint8_t value,
+                                  uint64_t size)
 {
   for (uint64_t i = 0; i < size; ++i)
   {
-    uint8_t byte = (static_cast<uint8_t *>(memory))[i];
+    uint8_t byte = (static_cast<const uint8_t *>(memory))[i];
     if (byte != value)
     {
       return byte - value;
@@ -171,8 +173,8 @@ void test_stream(ne_core_stream *stream,
     // Initialize with random noise and read.
     test_random_initialize(buffer1, TEST_SIMULATED_SIZE);
     TEST_CLEAR_RESULT();
-    uint64_t amount1 = stream->read(table->result, stream, buffer1,
-                                    TEST_SIMULATED_SIZE, blocking);
+    uint64_t amount1 = stream->read(
+        table->result, stream, buffer1, TEST_SIMULATED_SIZE, blocking);
     TEST_EXPECT_TABLE_RESULT();
 
     // Make sure some of the random data was overwritten.
@@ -185,7 +187,8 @@ void test_stream(ne_core_stream *stream,
     if (table->simulated_environment != NE_CORE_FALSE)
     {
       TEST_EXPECT(amount1 == TEST_SIMULATED_SIZE);
-      TEST_EXPECT(ne_intrinsic_memory_compare(buffer1, TEST_SIMULATED_STREAM,
+      TEST_EXPECT(ne_intrinsic_memory_compare(buffer1,
+                                              TEST_SIMULATED_STREAM,
                                               TEST_SIMULATED_SIZE) == 0);
     }
 
@@ -202,8 +205,8 @@ void test_stream(ne_core_stream *stream,
     if (stream->seek != nullptr)
     {
       TEST_CLEAR_RESULT();
-      stream->seek(table->result, stream, ne_core_stream_seek_origin_begin,
-                   position);
+      stream->seek(
+          table->result, stream, ne_core_stream_seek_origin_begin, position);
       TEST_EXPECT_TABLE_RESULT();
 
       // Verify that the position is the same.
@@ -218,8 +221,8 @@ void test_stream(ne_core_stream *stream,
       // Read again into the second buffer.
       test_random_initialize(buffer2, TEST_SIMULATED_SIZE);
       TEST_CLEAR_RESULT();
-      uint64_t amount2 = stream->read(table->result, stream, buffer2,
-                                      TEST_SIMULATED_SIZE, blocking);
+      uint64_t amount2 = stream->read(
+          table->result, stream, buffer2, TEST_SIMULATED_SIZE, blocking);
       TEST_EXPECT_TABLE_RESULT();
 
       // We should have read the exact same thing.
@@ -228,8 +231,8 @@ void test_stream(ne_core_stream *stream,
 
       // Go back to the beginning.
       TEST_CLEAR_RESULT();
-      stream->seek(table->result, stream, ne_core_stream_seek_origin_begin,
-                   position);
+      stream->seek(
+          table->result, stream, ne_core_stream_seek_origin_begin, position);
       TEST_EXPECT_TABLE_RESULT();
     }
   }
@@ -248,9 +251,11 @@ void test_stream(ne_core_stream *stream,
 
     // Write data to the stream.
     TEST_CLEAR_RESULT();
-    uint64_t amount1 =
-        stream->write(table->result, stream, TEST_SIMULATED_STREAM,
-                      TEST_SIMULATED_SIZE, blocking);
+    uint64_t amount1 = stream->write(table->result,
+                                     stream,
+                                     TEST_SIMULATED_STREAM,
+                                     TEST_SIMULATED_SIZE,
+                                     blocking);
     TEST_EXPECT_TABLE_RESULT();
 
     // If we have the ability to flush, call it now.
@@ -275,8 +280,8 @@ void test_stream(ne_core_stream *stream,
     if (stream->seek != nullptr)
     {
       TEST_CLEAR_RESULT();
-      stream->seek(table->result, stream, ne_core_stream_seek_origin_begin,
-                   position);
+      stream->seek(
+          table->result, stream, ne_core_stream_seek_origin_begin, position);
       TEST_EXPECT_TABLE_RESULT();
 
       // Verify that the position is the same.
@@ -291,19 +296,19 @@ void test_stream(ne_core_stream *stream,
       // Read the written contents into the buffer.
       test_random_initialize(buffer2, TEST_SIMULATED_SIZE);
       TEST_CLEAR_RESULT();
-      uint64_t amount2 = stream->read(table->result, stream, buffer2,
-                                      TEST_SIMULATED_SIZE, blocking);
+      uint64_t amount2 = stream->read(
+          table->result, stream, buffer2, TEST_SIMULATED_SIZE, blocking);
       TEST_EXPECT_TABLE_RESULT();
 
       // We should have read the exact same thing.
       TEST_EXPECT(amount1 == amount2);
-      TEST_EXPECT(ne_intrinsic_memory_compare(TEST_SIMULATED_STREAM, buffer2,
-                                              amount2) == 0);
+      TEST_EXPECT(ne_intrinsic_memory_compare(
+                      TEST_SIMULATED_STREAM, buffer2, amount2) == 0);
 
       // Go back to the beginning.
       TEST_CLEAR_RESULT();
-      stream->seek(table->result, stream, ne_core_stream_seek_origin_begin,
-                   position);
+      stream->seek(
+          table->result, stream, ne_core_stream_seek_origin_begin, position);
       TEST_EXPECT_TABLE_RESULT();
     }
   }
@@ -370,7 +375,9 @@ void test_stream(ne_core_stream *stream,
 
       // Beginning with negative offset (clamped).
       TEST_CLEAR_RESULT();
-      stream->seek(table->result, stream, ne_core_stream_seek_origin_begin,
+      stream->seek(table->result,
+                   stream,
+                   ne_core_stream_seek_origin_begin,
                    static_cast<uint64_t>(-1));
       TEST_EXPECT_TABLE_RESULT();
 
@@ -381,8 +388,8 @@ void test_stream(ne_core_stream *stream,
 
       // Current with positive offset.
       TEST_CLEAR_RESULT();
-      stream->seek(table->result, stream, ne_core_stream_seek_origin_current,
-                   1);
+      stream->seek(
+          table->result, stream, ne_core_stream_seek_origin_current, 1);
       TEST_EXPECT_TABLE_RESULT();
 
       TEST_CLEAR_RESULT();
@@ -392,7 +399,9 @@ void test_stream(ne_core_stream *stream,
 
       // Current with negative offset.
       TEST_CLEAR_RESULT();
-      stream->seek(table->result, stream, ne_core_stream_seek_origin_current,
+      stream->seek(table->result,
+                   stream,
+                   ne_core_stream_seek_origin_current,
                    static_cast<uint64_t>(-1));
       TEST_EXPECT_TABLE_RESULT();
 
@@ -422,7 +431,9 @@ void test_stream(ne_core_stream *stream,
         if (size != 0)
         {
           TEST_CLEAR_RESULT();
-          stream->seek(table->result, stream, ne_core_stream_seek_origin_end,
+          stream->seek(table->result,
+                       stream,
+                       ne_core_stream_seek_origin_end,
                        static_cast<uint64_t>(-1));
           TEST_EXPECT_TABLE_RESULT();
 
@@ -518,8 +529,10 @@ static void test_request_permission_callback(
   {
     // We SHOULD have permission.
     TEST_CLEAR_RESULT();
-    ne_core_query_permission(table->result, table->permission,
-                             &test_query_permission_granted_callback, table);
+    ne_core_query_permission(table->result,
+                             table->permission,
+                             &test_query_permission_granted_callback,
+                             table);
     TEST_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
   }
   else
@@ -528,8 +541,10 @@ static void test_request_permission_callback(
 
     // We SHOULD NOT have permission.
     TEST_CLEAR_RESULT();
-    ne_core_query_permission(table->result, table->permission,
-                             &test_query_permission_denied_callback, table);
+    ne_core_query_permission(table->result,
+                             table->permission,
+                             &test_query_permission_denied_callback,
+                             table);
     TEST_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
   }
 }
@@ -567,14 +582,20 @@ static void test_all(test_table *table)
 
       // Permissions should currently be 'prompt'.
       TEST_CLEAR_RESULT();
-      ne_core_query_permission(table->result, table->permission,
-                               &test_query_permission_prompt_callback, table);
+      ne_core_query_permission(table->result,
+                               table->permission,
+                               &test_query_permission_prompt_callback,
+                               table);
       TEST_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
 
       // Request permission and wait for the granted/denied callback.
       TEST_CLEAR_RESULT();
-      ne_core_request_permission(table->result, &table->permission, 1, nullptr,
-                                 &test_request_permission_callback, table);
+      ne_core_request_permission(table->result,
+                                 &table->permission,
+                                 1,
+                                 nullptr,
+                                 &test_request_permission_callback,
+                                 table);
       TEST_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
     }
     else
@@ -593,12 +614,17 @@ static void test_all(test_table *table)
       TEST_EXPECT(ne_core_supported(nullptr) == NE_CORE_TRUE);
 
       TEST_CLEAR_RESULT();
-      ne_core_query_permission(table->result, table->permission,
-                               &test_query_permission_invalid_callback, table);
+      ne_core_query_permission(table->result,
+                               table->permission,
+                               &test_query_permission_invalid_callback,
+                               table);
       TEST_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
 
       TEST_CLEAR_RESULT();
-      ne_core_request_permission(table->result, &table->permission, 1, nullptr,
+      ne_core_request_permission(table->result,
+                                 &table->permission,
+                                 1,
+                                 nullptr,
                                  &test_query_permission_invalid_callback,
                                  table);
       TEST_EXPECT_RESULT(NE_CORE_RESULT_SUCCESS);
@@ -652,9 +678,11 @@ int32_t ne_core_main(int32_t argc, char *argv[])
   extern void test_core(ne_core_bool simulated_environment);
   extern void test_io(ne_core_bool simulated_environment);
   extern void test_time(ne_core_bool simulated_environment);
+  extern void test_filesystem(ne_core_bool simulated_environment);
   test_core(simulated_environment);
   test_io(simulated_environment);
   test_time(simulated_environment);
+  test_filesystem(simulated_environment);
 
   // We can't know whether the test completed by this point do to callbacks.
   return 0;

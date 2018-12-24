@@ -23,14 +23,39 @@
 ///   #NE_CORE_TRUE if supported, #NE_CORE_FALSE otherwise.
 NE_CORE_API ne_core_bool (*ne_filesystem_supported)(uint64_t *result);
 
+/// Standard name for the Posix scheme which uses '/' and the root starts at
+/// '/'.
+#define NE_FILESYSTEM_SCHEME_POSIX "Posix" NE_CORE_NULL_PADDING
+
+/// Standard name for the Windows scheme which uses '\\' and the root starts at
+/// a drive (e.g. 'C:').
+#define NE_FILESYSTEM_SCHEME_WINDOWS "Windows" NE_CORE_NULL_PADDING
+
+/// Returns the name of the used filesystem path scheme. Each name is guaranteed
+/// to be at least 8 bytes long, and the first 8 bytes are guaranteed to be
+/// unqiue per scheme. This allows you to reinterpret the string as if it were a
+/// uint64_t for efficient platform checks. It is recommended to avoid using
+/// this function if possible to maximize platform independence. Do not free the
+/// returned memory.
+/// @param result
+///   - #NE_CORE_RESULT_SUCCESS:
+///     The operation completed successfully.
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
+/// @return
+///   The name of the scheme that the filesystem uses, or nullptr on error.
+///   - #ne_core_tag_platform_owned.
+NE_CORE_API const char *(*ne_filesystem_get_scheme)(uint64_t *result);
+
 /// All file system paths start with '/' and use '/' as a separator between all
 /// directories (UNIX format). This way is chosen to keep code platform
 /// agnostic. For example, on Windows the path 'C:\\Program Files' would be
 /// '/C:/Program Files/'. Not starting with '/' indicates that the path is
 /// relative to the working directory. Redundant '/////' will be treated as a
-/// single '/'. Paths may optionally end with '/'. Not all characters for
-/// filenames are valid on all platforms. The following is a list of characters
-/// to avoid because they may not work on all platforms:
+/// single '/'. Paths may optionally end with '/', however all paths returned
+/// from ne_filesystem APIs will NOT include the trailing '/'. Not all
+/// characters for filenames are valid on all platforms. The following is a list
+/// of characters to avoid because they may not work on all platforms:
 /// - <>:"/\|?*^
 /// - Any ASCII character from 0 to 31 (decimal).
 typedef struct ne_filesystem_tag_universal_path
@@ -191,17 +216,17 @@ struct ne_filesystem_open_info
 {
   /// The path to the file we would like to open in universal format.
   ///   - #ne_filesystem_tag_universal_path.
-  const char *path;
+  const char *universal_path;
 
   /// Whether we're performing a reads, writes, or combination operations. This
   /// option controls the function pointers that will be filled out on the
   /// #ne_core_stream.
   ne_filesystem_io io;
 
-  /// The action to take if a file already exists at the #path.
+  /// The action to take if a file already exists at the #universal_path.
   ne_filesystem_if_file_exists if_file_exists;
 
-  /// The action to take if a file does not exist at the #path.
+  /// The action to take if a file does not exist at the #universal_path.
   ne_filesystem_if_none_exists if_none_exists;
 
   /// When we open the file, how would we like to share it with other external
@@ -216,10 +241,7 @@ struct ne_filesystem_open_info
   ne_core_bool bypass_cache;
 };
 
-// All files are always opened for binary (there is no text translation mode).
-// If specifying 'ne_filesystem_create_if_none' or 'ne_filesystem_create_always'
-// this call will implicitly create the directory structure leading up to the
-// file.
+/// All files are always opened for binary (there is no text translation mode).
 /// @param result
 ///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
@@ -287,13 +309,13 @@ typedef enum ne_filesystem_entry_type NE_CORE_ENUM
 ///     The \p path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
 ///     An error occurred or the path did not resolve to a file system entry.
-/// @param path
+/// @param universal_path
 ///   The path to the entry in the universal format.
 ///   - #ne_filesystem_tag_universal_path.
 /// @return
 ///   The type of entry, or #ne_filesystem_entry_type_none if an error occurs.
 NE_CORE_API ne_filesystem_entry_type (*ne_filesystem_get_type)(
-    uint64_t *result, const char *path);
+    uint64_t *result, const char *universal_path);
 
 /// An entry in a filesystem has 3 types of time assocaited with it: time of
 /// creation, last time the entry was modified, and the last time the entry was
@@ -324,7 +346,7 @@ typedef enum ne_filesystem_time_type NE_CORE_ENUM
 ///     The \p path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
 ///     An error occurred or the path did not resolve to a file system entry.
-/// @param path
+/// @param universal_path
 ///   The path to the entry in the universal format.
 ///   - #ne_filesystem_tag_universal_path.
 /// @param type
@@ -332,7 +354,7 @@ typedef enum ne_filesystem_time_type NE_CORE_ENUM
 /// @return
 ///   The time of the file in nanoseconds, or 0 if an error occurs.
 NE_CORE_API uint64_t (*ne_filesystem_get_time)(uint64_t *result,
-                                               const char *path,
+                                               const char *universal_path,
                                                ne_filesystem_time_type type);
 
 /// Set a time in nanoseconds for a file entry. Note that the actual
@@ -358,7 +380,7 @@ NE_CORE_API uint64_t (*ne_filesystem_get_time)(uint64_t *result,
 NE_CORE_API void (*ne_filesystem_set_time)(uint64_t *result,
                                            const char *path,
                                            ne_filesystem_time_type type,
-                                           uint64_t time);
+                                           uint64_t time_nanoseconds);
 
 /// Reads the destination of a symbolic link. The memory returned must be freed.
 /// @param result
@@ -370,7 +392,9 @@ NE_CORE_API void (*ne_filesystem_set_time)(uint64_t *result,
 ///     The \p path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
 ///     An error occurred or the path did not resolve to a file system entry.
-/// @param path
+///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+///     Not enough system memory or address space, or other system error.
+/// @param universal_path
 ///   The path to the entry in the universal format.
 ///   - #ne_filesystem_tag_universal_path.
 /// @return
@@ -378,8 +402,8 @@ NE_CORE_API void (*ne_filesystem_set_time)(uint64_t *result,
 ///   #NE_CORE_NULL if an error occurs.
 ///   - #ne_core_tag_user_owned.
 ///   - #ne_filesystem_tag_universal_path.
-NE_CORE_API const char *(*ne_filesystem_read_symlink)(uint64_t *result,
-                                                      const char *path);
+NE_CORE_API const char *(*ne_filesystem_read_symlink)(
+    uint64_t *result, const char *universal_path);
 
 /// Returns the size of a file in bytes.
 /// @param result
@@ -408,15 +432,16 @@ NE_CORE_API uint64_t (*ne_filesystem_file_size)(uint64_t *result,
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
 ///     The \p path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_DIRECTORY_NOT_EMPTY:
-//      We attempted to delete a directory but it was not empty.
-//      Use a recursive algorithm to clear out the contents of the directory and
-//      all sub-directories first.
+///     We attempted to delete a directory but it was not empty.
+///     Use a recursive algorithm to clear out the contents of the directory and
+///     all sub-directories first.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
 ///     An error occurred or the path did not resolve to a file system entry.
-/// @param path
+/// @param universal_path
 ///   The path to the entry in the universal format.
 ///   - #ne_filesystem_tag_universal_path.
-NE_CORE_API void (*ne_filesystem_delete)(uint64_t *result, const char *path);
+NE_CORE_API void (*ne_filesystem_delete)(uint64_t *result,
+                                         const char *universal_path);
 
 /// Moves a file from one path to another path. This operating can also be
 /// conceptually thought of as rennaming if only the filename part of the path
@@ -427,19 +452,20 @@ NE_CORE_API void (*ne_filesystem_delete)(uint64_t *result, const char *path);
 ///   - #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The package is not supported.
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
-///     The \p from_path or \p to_path required #NE_FILESYSTEM_PERMISSION.
+///     The \p from_universal_path or \p to_universal_path required
+///     #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
 ///     An error occurred or the path did not resolve to a file system entry.
-/// @param from_path
+/// @param from_universal_path
 ///   The source universal path to the entry we want to move/rename.
 ///   - #ne_filesystem_tag_universal_path.
-/// @param to_path
+/// @param to_universal_path
 ///   The destination universal path to where we want the entry after the
 ///   move/rename completes.
 ///   - #ne_filesystem_tag_universal_path.
 NE_CORE_API void (*ne_filesystem_move_rename)(uint64_t *result,
-                                              const char *from_path,
-                                              const char *to_path);
+                                              const char *from_universal_path,
+                                              const char *to_universal_path);
 
 /// Outputs an enumerator that walks over the child entries of the given
 /// directory and outputs the name of each child entry. Note that dereferncing
@@ -453,49 +479,67 @@ NE_CORE_API void (*ne_filesystem_move_rename)(uint64_t *result,
 ///     The \p directory_path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
 ///     An error occurred or the path did not resolve to a directory.
-/// @param directory_path
+/// @param directory_universal_path
 ///   The path to the directory in the universal format.
 ///   - #ne_filesystem_tag_universal_path.
 /// @param enumerator_out
 ///   Outputs the created enumerator.
-///   #ne_core_enumerator.dereference takes 'const char**' for 'value_out' and
+///   #ne_core_enumerator.dereference takes 'const char **' for 'value_out' and
 ///   outputs the name of each child (NOT paths).
 NE_CORE_API void (*ne_filesystem_enumerator)(
     uint64_t *result,
-    const char *directory_path,
+    const char *directory_universal_path,
     ne_core_enumerator *enumerator_out);
 
-/// Converts a universal path to an operating system specific path. This
-/// function should typically only be used for displaying a string to the user
-/// or for interoping directly with the operating system. Note that unsupported
-/// symbols are not changed in any way. The conversion is one-to-one with
-/// #ne_filesystem_translate_os_to_universal. The memory returned must be freed.
+/// Converts an operating system specific path to an absolute universal path.
+/// This function should typically only be used for converting a user written
+/// string or for interoping directly with the operating system. Note that
+/// unsupported symbols are not changed in any way. The path is made absolute by
+/// utilizing the current working drive/directory. The reason that the path is
+/// always converted to absolute is that there are os path constructs that
+/// cannot be represented with the universal path (such as 'C:test.txt' on
+/// Windows). Conversion to absolute allows us to avoid these unsupported
+/// constructs. All strings and paths are in UTF8, regardless of operating
+/// system. The memory returned must be freed.
 /// @param result
 ///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
 ///   - #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The package is not supported.
-/// @param path
+///   - #NE_FILESYSTEM_RESULT_ERROR:
+///     The path was unable to be translated.
+///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+///     Not enough system memory or address space, or other system error.
+/// @param universal_path
 ///   The path to the entry in the universal format.
 ///   - #ne_filesystem_tag_universal_path.
 /// @return
 ///   The translated path in os format, or #NE_CORE_NULL if an error occurs.
 ///   - #ne_core_tag_user_owned.
 ///   - #ne_filesystem_tag_os_path.
-NE_CORE_API const char *(*ne_filesystem_translate_universal_to_os)(
-    uint64_t *result, const char *path);
+NE_CORE_API char *(*ne_filesystem_translate_universal_to_os)(
+    uint64_t *result, const char *universal_path);
 
-/// Converts an operating system specific path to a universal path. This
-/// function should typically only be used for converting a user written string
-/// or for interoping directly with the operating system. Note that unsupported
-/// symbols are not changed in any way. The conversion is one-to-one with
-/// #ne_filesystem_translate_universal_to_os. The memory returned must be freed.
+/// Converts an operating system specific path to an absolute canonicalized
+/// universal path. This function should typically only be used for converting a
+/// user written string or for interoping directly with the operating system.
+/// Note that unsupported symbols are not changed in any way. The path is made
+/// absolute by utilizing the current working drive/directory. The reason that
+/// the path is always converted to absolute is that there are os path
+/// constructs that cannot be represented with the universal path (such as
+/// 'C:test.txt' on Windows). Conversion to absolute allows us to avoid these
+/// unsupported constructs. All strings and paths are in UTF8, regardless of
+/// operating system. The memory returned must be freed.
 /// @param result
 ///   - #NE_CORE_RESULT_SUCCESS:
 ///     The operation completed successfully.
 ///   - #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The package is not supported.
-/// @param path
+///   - #NE_FILESYSTEM_RESULT_ERROR:
+///     The path was unable to be translated.
+///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+///     Not enough system memory or address space, or other system error.
+/// @param os_path
 ///   The path to the entry in the operating system specific format.
 ///   - #ne_filesystem_tag_os_path.
 /// @return
@@ -503,8 +547,8 @@ NE_CORE_API const char *(*ne_filesystem_translate_universal_to_os)(
 ///   occurs.
 ///   - #ne_core_tag_user_owned.
 ///   - #ne_filesystem_tag_universal_path.
-NE_CORE_API const char *(*ne_filesystem_translate_os_to_universal)(
-    uint64_t *result, const char *path);
+NE_CORE_API char *(*ne_filesystem_translate_os_to_universal)(
+    uint64_t *result, const char *os_path);
 
 /// Set the current working directory. All relative paths are relative to this
 /// location.
@@ -513,11 +557,11 @@ NE_CORE_API const char *(*ne_filesystem_translate_os_to_universal)(
 ///     The operation completed successfully.
 ///   - #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The package is not supported.
-/// @param path
+/// @param universal_path
 ///   The path to the entry in the universal format.
 ///   - #ne_filesystem_tag_universal_path.
-NE_CORE_API void (*ne_filesystem_set_working_directory)(uint64_t *result,
-                                                        const char *path);
+NE_CORE_API void (*ne_filesystem_set_working_directory)(
+    uint64_t *result, const char *universal_path);
 
 /// Special directories we may request.
 typedef enum ne_filesystem_directory NE_CORE_ENUM
@@ -560,10 +604,12 @@ typedef enum ne_filesystem_directory NE_CORE_ENUM
 ///     The operation completed successfully.
 ///   - #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The package is not supported.
+///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+///     Not enough system memory or address space, or other system error.
 /// @param directory
 ///   Which special directory is being requested.
 /// @return
-///   A path to the directory requested in universal format, or #NE_CORE_NULL if
+///   A path to the directory requested in universal format or #NE_CORE_NULL if
 ///   an error occurs.
 ///   - #ne_core_tag_user_owned.
 ///   - #ne_filesystem_tag_universal_path.

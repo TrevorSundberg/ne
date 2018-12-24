@@ -8,7 +8,14 @@ project(ne)
 # See https://github.com/Kitware/CMake/blob/master/Modules/CMakeDetermineSystem.cmake
 string(REGEX REPLACE "[^0-9a-zA-Z]" "_" NE_CORE_PLATFORM ${CMAKE_SYSTEM_NAME})
 string(TOUPPER ${NE_CORE_PLATFORM} NE_CORE_PLATFORM)
-string(CONCAT NE_CORE_PLATFORM_NAME "\\" "\"" ${NE_CORE_PLATFORM} "\\" "\"")
+
+# Convert the value inside CMAKE_SYSTEM_NAME to a quoted string.
+# We guarantee that all names will be at least 8 bytes long by
+# appending 7 nulls (+1 for the implicit null in C strings).
+# We also guarantee the first 8 bytes will be unique.
+# This is currently true for all possible CMAKE_SYSTEM_NAMEs.
+# See https://github.com/Kitware/CMake/blob/master/Modules/CMakeDetermineSystem.cmake
+string(CONCAT NE_CORE_PLATFORM_NAME "\\" "\"" ${CMAKE_SYSTEM_NAME} "\\0\\0\\0\\0\\0\\0\\0\\" "\"")
 
 add_definitions(-D NE_CORE_PLATFORM_NAME=${NE_CORE_PLATFORM_NAME})
 add_definitions(-D NE_CORE_PLATFORM_${NE_CORE_PLATFORM}=1)

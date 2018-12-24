@@ -59,7 +59,9 @@ uint64_t test_string_length(const char *string);
 
 int64_t test_string_compare(const char *a, const char *b);
 
-int64_t test_memory_compare_value(void *memory, uint8_t value, uint64_t size);
+int64_t test_memory_compare_value(const void *memory,
+                                  uint8_t value,
+                                  uint64_t size);
 
 // Initializes a buffer with psuedo-random memory.
 void test_random_initialize(void *memory, uint64_t size);
@@ -96,9 +98,12 @@ void test_run(test_table *table);
   test_run(&table)
 
 #define TEST_EXPECT(expression)                                                \
-  NE_CORE_ENCLOSURE(table->success &= test_validate(                           \
-                        (expression), NE_CORE_RESULT_INVALID, __FILE__,        \
-                        __LINE__, "TEST_EXPECT(" #expression ") failed\n");)
+  NE_CORE_ENCLOSURE(table->success &=                                          \
+                    test_validate((expression),                                \
+                                  NE_CORE_RESULT_INVALID,                      \
+                                  __FILE__,                                    \
+                                  __LINE__,                                    \
+                                  "TEST_EXPECT(" #expression ") failed\n");)
 
 #define TEST_CLEAR_RESULT()                                                    \
   NE_CORE_ENCLOSURE(if (table->result) *table->result =                        \
@@ -106,9 +111,12 @@ void test_run(test_table *table);
 
 #define TEST_EXPECT_RESULT(expected_result)                                    \
   NE_CORE_ENCLOSURE(if (table->result) {                                       \
-    table->success &= test_validate(                                           \
-        *table->result == (expected_result), *table->result, __FILE__,         \
-        __LINE__, "TEST_EXPECT_RESULT(" #expected_result ") failed\n");        \
+    table->success &=                                                          \
+        test_validate(*table->result == (expected_result),                     \
+                      *table->result,                                          \
+                      __FILE__,                                                \
+                      __LINE__,                                                \
+                      "TEST_EXPECT_RESULT(" #expected_result ") failed\n");    \
   })
 
 #define TEST_EXPECT_TABLE_RESULT() TEST_EXPECT_RESULT(table->expected_result)

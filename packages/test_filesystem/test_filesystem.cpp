@@ -1,97 +1,136 @@
 /// @file
 /// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../test_filesystem/test_filesystem.h"
-
 /*
 // Test writing to a file multiple times.
 // Test appending to a file multiple times.
 // Verify both outputs above by reading the file back.
 // Verify shares by opening multiple files at once and doing operations.
 // Verify create always/if_none/never.
-
-static void test_translate(const char *ne_path, TEST_DECLARE_PARAMETERS) {
-  TEST_IGNORE_UNUSED_PARAMETERS();
-
-  TEST_CLEAR_RESULT();
-  const char *os_translated = ne_filesystem_translate_ne_to_os(result, ne_path);
-  TEST_EXPECT("ne_filesystem_translate_ne_to_os",
-              os_translated != ne_core_null);
-  TEST_EXPECT_RESULT("ne_filesystem_translate_ne_to_os", expected_result);
-
-  TEST_CLEAR_RESULT();
-  const char *ne_translated =
-      ne_filesystem_translate_os_to_ne(result, os_translated);
-  TEST_EXPECT("ne_filesystem_translate_os_to_ne",
-              ne_translated != ne_core_null);
-  TEST_EXPECT("ne_filesystem_translate_os_to_ne",
-              test_string_compare(ne_translated, ne_path) == 0);
-  TEST_EXPECT_RESULT("ne_filesystem_translate_os_to_ne", expected_result);
-}
-
-static void test_open_file(const char *path, ne_filesystem_io io,
-                           ne_filesystem_create create,
-                           ne_filesystem_share_flags share,
-                           ne_core_stream *stream_out,
-                           TEST_DECLARE_PARAMETERS) {
-  test_memory_set(stream_out, 1, sizeof(*stream_out));
-  TEST_CLEAR_RESULT();
-  ne_filesystem_open_file(result, path, io, ne_filesystem_create_if_none, 0,
-                          stream_out);
-  TEST_EXPECT_RESULT("ne_filesystem_open_file", expected_result);
-}
-
-static void test_write(ne_core_stream *stream_out, TEST_DECLARE_PARAMETERS) {
-  test_memory_set(stream_out, 1, sizeof(*stream_out));
-  TEST_CLEAR_RESULT();
-  ne_filesystem_open_file(result, path, io, ne_filesystem_create_if_none, 0,
-                          stream_out);
-  TEST_EXPECT_RESULT("ne_filesystem_open_file", expected_result);
-
-  TEST_EXPECT("read", stream_out->read == ne_core_null);
-
-  TEST_CLEAR_RESULT();
-  stream_out->write(result, stream_out, buffer, sizeof(buffer), ne_core_false);
-  TEST_EXPECT_RESULT("write", expected_result);
-
-  TEST_CLEAR_RESULT();
-  output.flush(result, &output);
-  TEST_EXPECT_RESULT("flush", expected_result);
-
-  TEST_CLEAR_RESULT();
-  output.get_position(result, &output);
-  TEST_EXPECT_RESULT("get_position", expected_result);
-
-  TEST_CLEAR_RESULT();
-  output.get_length(result, &output);
-  TEST_EXPECT_RESULT("get_length", expected_result);
-
-  TEST_EXPECT("is_eof", output.is_eof == ne_core_null);
-  TEST_EXPECT("seek", output.seek == ne_core_null);
-  TEST_EXPECT("free", output.free == ne_core_null);
-}
-
-static void ne_filesystem_full_tests(ne_core_bool *is_success_out,
-                                     uint64_t *result, uint64_t expected_result,
-                                     void *user_data) {
-  TEST_IGNORE_UNUSED_PARAMETERS();
-
-  ne_filesystem_translate_test("/", is_success_out, result, expected_result,
-                               user_data);
-}
-
-static void ne_filesystem_null_tests(ne_core_bool *is_success_out,
-                                     uint64_t *result, uint64_t expected_result,
-                                     void *user_data) {
-  TEST_IGNORE_UNUSED_PARAMETERS();
-}
-
-static void ne_filesystem_shared_tests(ne_core_bool *is_success_out,
-                                       uint64_t *result,
-                                       uint64_t expected_result,
-                                       void *user_data) {
-  TEST_IGNORE_UNUSED_PARAMETERS();
-}
-
-ne_core_bool test_filesystem() { TEST_RUN(ne_filesystem); }
-
 */
+
+static char get_last_char(const char *string)
+{
+  uint64_t length = test_string_length(string);
+  if (length != 0)
+  {
+    return string[length - 1];
+  }
+
+  return '\0';
+}
+
+static bool no_trailing_slash(const char *path)
+{
+  char last = get_last_char(path);
+  return last != '/' && last != '\\';
+}
+
+static void test_translate_paths(test_table *table,
+                                 const char *universal,
+                                 const char *os)
+{
+  TEST_CLEAR_RESULT();
+  char *test_os =
+      ne_filesystem_translate_universal_to_os(table->result, universal);
+  TEST_EXPECT_TABLE_RESULT();
+  TEST_EXPECT(test_string_compare(test_os, os) == 0);
+  TEST_EXPECT(no_trailing_slash(test_os));
+
+  TEST_CLEAR_RESULT();
+  ne_core_free(table->result, test_os);
+  TEST_EXPECT_TABLE_RESULT();
+
+  TEST_CLEAR_RESULT();
+  char *test_universal =
+      ne_filesystem_translate_os_to_universal(table->result, os);
+  TEST_EXPECT_TABLE_RESULT();
+  TEST_EXPECT(test_string_compare(test_universal, universal) == 0);
+  TEST_EXPECT(no_trailing_slash(test_universal));
+
+  TEST_CLEAR_RESULT();
+  ne_core_free(table->result, test_universal);
+  TEST_EXPECT_TABLE_RESULT();
+}
+
+static void full_tests(test_table *table)
+{
+  // TODO(Trevor.Sundberg) We should test relative paths, but we would need to
+  // control the working directory. Most likely we'd set POSIX systems to '/'
+  // and Windows to the system drive, like 'C:'.
+
+  TEST_CLEAR_RESULT();
+  const char *scheme = ne_filesystem_get_scheme(table->result);
+  TEST_EXPECT(scheme != nullptr && *scheme != '\0');
+  // Read the 8 bytes to help ensure it's readable memory.
+  TEST_EXPECT(ne_intrinsic_memory_compare(scheme, scheme, sizeof(uint64_t)) ==
+              0);
+  // Make sure the string is a reasonable length and doesn't run off the end
+  // without a null terminator.
+  TEST_EXPECT(test_string_length(scheme) < static_cast<uint16_t>(-1));
+  TEST_EXPECT_TABLE_RESULT();
+
+  uint64_t scheme_id = *reinterpret_cast<const uint64_t *>(scheme);
+
+  // All other platforms except Windows use the same path scheme.
+  if (scheme_id ==
+      *reinterpret_cast<const uint64_t *>(NE_FILESYSTEM_SCHEME_WINDOWS))
+  {
+    // Absolute paths.
+    test_translate_paths(table, R"(/X:/test1/test2)", R"(X:\test1\test2)");
+    // Network paths.
+    test_translate_paths(table, R"(/\\test1/test2)", R"(\\test1\test2)");
+    // UNC paths.
+    test_translate_paths(table, R"(/\\?/test1/test2)", R"(\\?\test1\test2)");
+    // Device paths.
+    test_translate_paths(table, R"(/\\./test1/test2)", R"(\\.\test1\test2)");
+  }
+  else
+  {
+    // Absolute paths.
+    test_translate_paths(table, R"(/test1/test2)", R"(/test1/test2)");
+  }
+
+  /*
+  ne_filesystem_open_info info;
+  ne_intrinsic_memory_set(&info, NE_CORE_UNINITIALIZED_BYTE, sizeof(info));
+  ne_core_stream stream;
+  ne_intrinsic_memory_set(&stream, NE_CORE_UNINITIALIZED_BYTE, sizeof(stream));
+  TEST_CLEAR_RESULT();
+  ne_filesystem_open_file(table->result, &info, &stream);
+  TEST_EXPECT_TABLE_RESULT();
+
+  TEST_EXPECT(stream.read == NE_CORE_NULL);
+  TEST_EXPECT(stream.write != NE_CORE_NULL);
+  TEST_EXPECT(stream.flush != NE_CORE_NULL);
+  TEST_EXPECT(stream.get_position == NE_CORE_NULL);
+  TEST_EXPECT(stream.get_size == NE_CORE_NULL);
+  TEST_EXPECT(stream.is_terminated == NE_CORE_NULL);
+  TEST_EXPECT(stream.seek == NE_CORE_NULL);
+  TEST_EXPECT(stream.free != NE_CORE_NULL);
+
+  test_stream(&stream, NE_CORE_TRUE, table);
+  */
+}
+
+static void null_tests(test_table *table)
+{
+  TEST_CLEAR_RESULT();
+  TEST_EXPECT(ne_filesystem_translate_universal_to_os(table->result, "") ==
+              nullptr);
+  TEST_EXPECT_TABLE_RESULT();
+
+  TEST_CLEAR_RESULT();
+  TEST_EXPECT(ne_filesystem_translate_os_to_universal(table->result, "") ==
+              nullptr);
+  TEST_EXPECT_TABLE_RESULT();
+}
+
+static void shared_tests(test_table *table) { (void)table; }
+
+static void exit_tests(test_table *table) { (void)table; }
+
+void test_filesystem(ne_core_bool simulated_environment)
+{
+  TEST_RUN(ne_filesystem_supported, NE_CORE_PERMISSION_INVALID);
+}
