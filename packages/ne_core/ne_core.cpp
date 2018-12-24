@@ -5,6 +5,7 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <unordered_map>
 #include <vector>
 
@@ -39,6 +40,8 @@ public:
                                   const void *user_data);
 
   void run_exit_callbacks();
+
+  void next_frame_executors_reserve_extra(uint64_t count);
 
   std::unordered_map<uint64_t, ne_core_permission_event> permissions;
   std::vector<std::function<void()>> next_frame_executors;
@@ -81,11 +84,29 @@ void ne_core_instance::run_exit_callbacks()
 }
 
 /******************************************************************************/
+void ne_core_instance::next_frame_executors_reserve_extra(uint64_t count)
+{
+  next_frame_executors.reserve(next_frame_executors.size() +
+                               static_cast<size_t>(count));
+}
+
+/******************************************************************************/
 static ne_core_bool _ne_core_supported(uint64_t *result)
 {
   NE_CORE_SUPPORTED_IMPLEMENTATION(_supported);
 }
 ne_core_bool (*ne_core_supported)(uint64_t *result) = &_ne_core_supported;
+
+/******************************************************************************/
+static const char *_ne_core_get_platform_name(uint64_t *result)
+{
+  NE_CORE_UNSUPPORTED_RETURN(_supported, nullptr);
+
+  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
+  return NE_CORE_PLATFORM_NAME;
+}
+const char *(*ne_core_get_platform_name)(uint64_t *result) =
+    &_ne_core_get_platform_name;
 
 /******************************************************************************/
 static void _ne_core_on_exit(uint64_t *result,
@@ -94,9 +115,13 @@ static void _ne_core_on_exit(uint64_t *result,
 {
   NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
 
-  _instance->exit_callbacks.emplace_back(
-      [callback, user_data]() mutable { callback(nullptr, user_data); });
-  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
+  NE_CORE_TRY
+  {
+    _instance->exit_callbacks.emplace_back(
+        [callback, user_data]() mutable { callback(nullptr, user_data); });
+    NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
+  }
+  NE_CORE_CATCH_ALLOCATION_RETURN(NE_CORE_NONE)
 }
 void (*ne_core_on_exit)(uint64_t *result,
                         ne_core_exit_callback callback,
@@ -113,7 +138,13 @@ static void _ne_core_query_permission(uint64_t *result,
   ne_core_permission_event *event =
       get_or_null(_instance->permissions, permission);
 
-  _instance->invoke_permission_callback(permission, event, callback, user_data);
+  NE_CORE_TRY
+  {
+    _instance->invoke_permission_callback(
+        permission, event, callback, user_data);
+  }
+  NE_CORE_CATCH_ALLOCATION_RETURN(NE_CORE_NONE)
+
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 }
 void (*ne_core_query_permission)(uint64_t *result,
@@ -135,6 +166,14 @@ static void _ne_core_request_permission(uint64_t *result,
   // TODO(Trevor.Sundberg): Use the message.
   (void)message;
 
+  NE_CORE_TRY
+  {
+    // Reserve ahead of time so that invoke_permission_callback cannot fail with
+    // a bad allocation.
+    _instance->next_frame_executors_reserve_extra(count);
+  }
+  NE_CORE_CATCH_ALLOCATION_RETURN(NE_CORE_NONE)
+
   for (uint64_t i = 0; i < count; ++i)
   {
     uint64_t permission = permissions[i];
@@ -149,8 +188,8 @@ static void _ne_core_request_permission(uint64_t *result,
       // TODO(Trevor.Sundberg): Query other packages for permission handling.
       event->current_state = ne_core_permission_state_granted;
     }
-    _instance->invoke_permission_callback(permission, event, callback,
-                                          user_data);
+    _instance->invoke_permission_callback(
+        permission, event, callback, user_data);
   }
 
   // TODO(Trevor.Sundberg): Handle NE_CORE_RESULT_INVALID_PARAMETER.
@@ -210,11 +249,20 @@ static void _ne_core_error(uint64_t *result,
 {
   NE_CORE_UNSUPPORTED_RETURN(_supported, NE_CORE_NONE);
 
-  std::cerr << std::endl << file << "(" << line << "): error 0x";
-  std::ios_base::fmtflags format(std::cerr.flags());
-  std::cerr << std::setfill('0') << std::setw(16) << std::hex << error_result;
-  std::cerr.flags(format);
-  std::cerr << ": " << message << std::endl;
+  // We use a stringstream to avoid saving and recalling flags, as well as to
+  // make the print more atomic.
+  std::stringstream stream;
+  stream << std::endl << file << "(" << line << "): ";
+
+  if (error_result != 0)
+  {
+    stream << "error 0x" << std::setfill('0') << std::setw(16) << std::hex
+           << error_result << ": ";
+  }
+
+  stream << message << std::endl;
+
+  std::cerr << stream.str();
 
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 }

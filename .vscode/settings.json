@@ -46,9 +46,15 @@
     "xlocmon": "cpp",
     "xloctime": "cpp",
     "chrono": "cpp",
-    "ratio": "cpp"
+    "ratio": "cpp",
+    "filesystem": "cpp",
+    "codecvt": "cpp",
+    "locale": "cpp",
+    "string": "cpp",
+    "string_view": "cpp",
+    "xlocbuf": "cpp",
+    "xlocmes": "cpp"
   },
-  "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
   "files.eol": "\n",
   "editor.tabSize": 2,
   "editor.detectIndentation": false,

@@ -5,7 +5,7 @@
 static void full_tests(test_table *table)
 {
   ne_core_stream input;
-  ne_intrinsic_memory_set(&input, 1, sizeof(input));
+  ne_intrinsic_memory_set(&input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input));
   TEST_CLEAR_RESULT();
   ne_io_get_input(table->result, &input);
   TEST_EXPECT_TABLE_RESULT();
@@ -22,7 +22,7 @@ static void full_tests(test_table *table)
   test_stream(&input, NE_CORE_FALSE, table);
 
   ne_core_stream output;
-  ne_intrinsic_memory_set(&output, 1, sizeof(output));
+  ne_intrinsic_memory_set(&output, NE_CORE_UNINITIALIZED_BYTE, sizeof(output));
   TEST_CLEAR_RESULT();
   ne_io_get_output(table->result, &output);
   TEST_EXPECT_TABLE_RESULT();
@@ -39,7 +39,7 @@ static void full_tests(test_table *table)
   test_stream(&output, NE_CORE_FALSE, table);
 
   ne_core_stream error;
-  ne_intrinsic_memory_set(&error, 1, sizeof(error));
+  ne_intrinsic_memory_set(&error, NE_CORE_UNINITIALIZED_BYTE, sizeof(error));
   TEST_CLEAR_RESULT();
   ne_io_get_error(table->result, &error);
   TEST_EXPECT_TABLE_RESULT();
@@ -61,25 +61,28 @@ static void full_tests(test_table *table)
 static void null_tests(test_table *table)
 {
   ne_core_stream input;
-  ne_intrinsic_memory_set(&input, 1, sizeof(input));
+  ne_intrinsic_memory_set(&input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input));
   TEST_CLEAR_RESULT();
   ne_io_get_input(table->result, &input);
   TEST_EXPECT_TABLE_RESULT();
-  TEST_EXPECT(test_memory_compare_value(&input, 1, sizeof(input)) == 0);
+  TEST_EXPECT(test_memory_compare_value(
+                  &input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input)) == 0);
 
   ne_core_stream output;
-  ne_intrinsic_memory_set(&output, 1, sizeof(output));
+  ne_intrinsic_memory_set(&output, NE_CORE_UNINITIALIZED_BYTE, sizeof(output));
   TEST_CLEAR_RESULT();
   ne_io_get_output(table->result, &output);
   TEST_EXPECT_TABLE_RESULT();
-  TEST_EXPECT(test_memory_compare_value(&input, 1, sizeof(input)) == 0);
+  TEST_EXPECT(test_memory_compare_value(
+                  &input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input)) == 0);
 
   ne_core_stream error;
-  ne_intrinsic_memory_set(&error, 1, sizeof(error));
+  ne_intrinsic_memory_set(&error, NE_CORE_UNINITIALIZED_BYTE, sizeof(error));
   TEST_CLEAR_RESULT();
   ne_io_get_error(table->result, &error);
   TEST_EXPECT_TABLE_RESULT();
-  TEST_EXPECT(test_memory_compare_value(&input, 1, sizeof(input)) == 0);
+  TEST_EXPECT(test_memory_compare_value(
+                  &input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input)) == 0);
 }
 
 static void shared_tests(test_table *table) { (void)table; }

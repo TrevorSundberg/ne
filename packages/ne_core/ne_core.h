@@ -9,6 +9,19 @@
 #define NE_CORE_C_LINKAGE "C"
 /// Indicates a null pointer.
 #define NE_CORE_NULL nullptr
+
+#if defined(NE_NO_EXCEPTIONS)
+/// Defined as 'try' if we allow exceptions and are in C++.
+#define NE_CORE_TRY if (1)
+/// Defined as 'catch' if we allow exceptions and are in C++.
+#define NE_CORE_CATCH(exception) else
+#else
+/// Defined as 'try' if we allow exceptions.
+#define NE_CORE_TRY try
+/// Defined as 'catch' if we allow exceptions.
+#define NE_CORE_CATCH(exception) catch (exception)
+#endif
+
 #else
 /// We can't force enum sizes, so we make an enum constant called 'force_size'
 /// that is as big as a 32-bit number.
@@ -17,7 +30,36 @@
 #define NE_CORE_C_LINKAGE
 /// Indicates a null pointer.
 #define NE_CORE_NULL 0
+/// Defined as 'try' if we allow exceptions and are in C++.
+#define NE_CORE_TRY if (1)
+/// Defined as 'catch' if we allow exceptions and are in C++.
+#define NE_CORE_CATCH(exception) else
 #endif
+
+/// A byte pattern that is used for uninitialized memory.
+#define NE_CORE_UNINITIALIZED_BYTE (0xCD)
+
+/// Used to pad platform strings so that we can guarnatee they are at least 8
+/// bytes long, so that they may be reinterpreted as a uint64_t for efficient
+/// checking.
+#define NE_CORE_NULL_PADDING "\0\0\0\0\0\0\0"
+
+// Below are the supported platform names. More may be added, and if external
+// users implement their own platforms then they may not appear in this list
+// yet. All names are guarnteed to be at least 8 bytes long and the first 8
+// bytes are unique.
+
+/// Standard name for the NE portable platform.
+/// The standard define is NE_CORE_PLATFORM_NE.
+#define NE_CORE_PLATFORM_NAME_NE "NE" NE_CORE_NULL_PADDING
+
+/// Standard name for the Windows platform.
+/// The standard define is NE_CORE_PLATFORM_WINDOWS.
+#define NE_CORE_PLATFORM_NAME_WINDOWS "Windows" NE_CORE_NULL_PADDING
+
+/// Standard name for an unknown platform.
+/// The standard define is NE_CORE_PLATFORM_UNKNOWN.
+#define NE_CORE_PLATFORM_NAME_UNKNOWN "Unknown" NE_CORE_NULL_PADDING
 
 // This should always be defined by the build system, however
 // if a user grabbed the header directly and included it in their
@@ -25,10 +67,15 @@
 // practice if the user is only including the header, but to build
 // the c files (or a library) the user/build system must specify.
 #if !defined(NE_CORE_PLATFORM_NAME)
-/// The name of the platform we're currently on. When compiling the platform
-/// specific libraries, this will be the name of the platform. When compiling
-/// to LLVM into an ne-executable, this will always be "NE".
-#define NE_CORE_PLATFORM_NAME "Unknown"
+/// The name of the platform we're currently on. This name is always guaranteed
+/// to be at least 8 bytes long (padded with nulls, including the implicit null
+/// terminator) and the first 8 bytes are guaranteed to be unique so that the
+/// user may efficiently reinterpret the string as a uint64_t for efficient
+/// platform checks. When compiling the platform specific libraries, this will
+/// be the name of the platform. When compiling with LLVM into a portable
+/// ne-executable this will always be "NE" if you walk to the first null
+/// terminator (trimmed).
+#define NE_CORE_PLATFORM_NAME NE_CORE_PLATFORM_NAME_UNKNOWN
 /// A conditional constant for detecing which platform we are on.
 #define NE_CORE_PLATFORM_UNKNOWN 1
 #endif
@@ -133,9 +180,9 @@ typedef uint8_t ne_core_bool;
 #if !defined(NDEBUG)
 /// Reports an error if a condition is false. Does not abort.
 #define NE_CORE_ASSERT(condition, text)                                        \
-  NE_CORE_ENCLOSURE(if (!(condition))                                          \
-                        ne_core_error(NE_CORE_NULL, NE_CORE_RESULT_INVALID,    \
-                                      __FILE__, __LINE__, (text));)
+  NE_CORE_ENCLOSURE(                                                           \
+      if (!(condition)) ne_core_error(                                         \
+          NE_CORE_NULL, NE_CORE_RESULT_INVALID, __FILE__, __LINE__, (text));)
 #else
 /// Reports an error if a condition is false. Does not abort.
 #define NE_CORE_ASSERT(condition, text)
@@ -158,7 +205,16 @@ typedef uint8_t ne_core_bool;
     return value;                                                              \
   })
 
-/// TO be used by #NE_CORE_UNSUPPORTED_RETURN when there is no return.
+/// Catches std::bad_alloc and returns an allocation failure result.
+#define NE_CORE_CATCH_ALLOCATION_RETURN(value)                                 \
+  NE_CORE_CATCH(const ::std::bad_alloc &)                                      \
+  {                                                                            \
+    NE_CORE_RESULT(NE_CORE_RESULT_ALLOCATION_FAILED);                          \
+    return value;                                                              \
+  }
+
+/// TO be used by #NE_CORE_UNSUPPORTED_RETURN or
+/// #NE_CORE_CATCH_ALLOCATION_RETURN when there is no return.
 #define NE_CORE_NONE
 
 /// Implements the supported call given a typically global boolean value.
@@ -216,7 +272,9 @@ typedef uint8_t ne_core_bool;
 // existence as long as return values/results are checked.
 
 // If any errors are returned from a function, the function must also return
-// null/0, etc.
+// null/0 and must not mutate any parameters (no outputs). The function
+// also must act as if there were no side effects (no partial completions). This
+// is similar to the 'strong exception guarantee' in C++.
 
 // The possible results are listed in order of priority (top to bottom). If it
 // is possible for a function to return multiple errors, the first in the list
@@ -237,18 +295,11 @@ typedef uint8_t ne_core_bool;
 // All parameters that output will be have '_out' as a suffix. Outputs should
 // always be at the end of a parameter list.
 
-// If a function results in an error, it must either output all possible values
-// and returns, or it must return nothing and output nothing (null).
-
 // All functions that accept pointers do not implicitly allow null unless
 // otherwise specified. Results are undefined if null is given.
 
 // Any parameter on a function pointer inside a struct named `self` means the
 // function takes the struct itself (like a C++ this object).
-
-// Error results are listed in priority order, meaning that if two errors are
-// possible on a single function call, the one that will occur is the first one
-// listed.
 
 // When implementing a function pointer, the implementation should be static
 // (internal linkage) and should match the name of the function
@@ -302,7 +353,7 @@ typedef uint8_t ne_core_bool;
 
 /// Memory returned is owned by the platform/host. The next call to the
 /// same function will free or re-use the previously returned memory.
-typedef struct ne_core_tag_host_owned ne_core_tag_host_owned;
+typedef struct ne_core_tag_platform_owned ne_core_tag_platform_owned;
 
 /// Memory returned is owned by the user. The user must call #ne_core_free on
 /// the returned memory.
@@ -378,6 +429,26 @@ extern int32_t ne_core_main(int32_t argc, char *argv[]);
 ///   #NE_CORE_TRUE if supported, #NE_CORE_FALSE otherwise.
 NE_CORE_API ne_core_bool (*ne_core_supported)(uint64_t *result);
 
+/// Returns the name of the current platform. When compiling as a portable
+/// executable, #NE_CORE_PLATFORM_NAME will always return the string "NE" and
+/// therefore this function must be called to dynamically retrieve the name of
+/// the platform. The value returned will always match the names that
+/// #NE_CORE_PLATFORM_NAME can produce. Each name is guaranteed to be at least 8
+/// bytes long, and the first 8 bytes are guaranteed to be unqiue per platform.
+/// This allows you to reinterpret the string as if it were a uint64_t for
+/// efficient platform checks. It is recommended to avoid using this function if
+/// possible to maximize platform independence. Do not free the returned memory.
+/// @param result
+///   - #NE_CORE_RESULT_SUCCESS:
+///     The operation completed successfully.
+///   - #NE_CORE_RESULT_NOT_SUPPORTED:
+///     The package is not supported.
+/// @return
+///   The name of the current platform that we are running on, or nullptr on
+///   error. The possible names are the same as #NE_CORE_PLATFORM_NAME.
+///   - #ne_core_tag_platform_owned.
+NE_CORE_API const char *(*ne_core_get_platform_name)(uint64_t *result);
+
 /// Reserved for future use.
 typedef struct ne_core_exit_event ne_core_exit_event;
 
@@ -398,6 +469,8 @@ typedef void (*ne_core_exit_callback)(const ne_core_exit_event *event,
 ///     The operation completed successfully.
 ///   - #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The package is not supported.
+///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+///     Not enough system memory or address space, or other system error.
 /// @param callback
 ///   A user provided callback that will be invoked upon exiting.
 /// @param user_data
@@ -463,6 +536,8 @@ typedef void (*ne_core_permission_callback)(
 ///     The operation completed successfully.
 ///   - #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The package is not supported.
+///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+///     Not enough system memory or address space, or other system error.
 /// @param permission
 ///   The permission that we want to check the state of.
 /// @param callback
@@ -491,6 +566,8 @@ NE_CORE_API void (*ne_core_query_permission)(
 ///     The operation completed successfully.
 ///   - #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The package is not supported.
+///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+///     Not enough system memory or address space, or other system error.
 /// @param permissions
 ///   An array of permissions that the user wants to request. Platforms will
 ///   attempt to show all permission requests in a single dialog.
@@ -546,6 +623,8 @@ typedef void (*ne_core_frame_callback)(const ne_core_frame_event *event,
 ///     The operation completed successfully.
 ///   - #NE_CORE_RESULT_NOT_SUPPORTED:
 ///     The package is not supported.
+///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+///     Not enough system memory or address space, or other system error.
 /// @param callback
 ///   A user provided callback that will be invoked on the next frame.
 /// @param user_data
@@ -642,6 +721,8 @@ struct ne_core_enumerator
   /// @param result
   ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
+  ///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+  ///     Not enough system memory or address space, or other system error.
   /// @param self
   ///   The struct that owns the function pointer.
   void (*advance)(uint64_t *result, ne_core_enumerator *self);
@@ -652,6 +733,8 @@ struct ne_core_enumerator
   /// @param result
   ///   - #NE_CORE_RESULT_SUCCESS:
   ///     The operation completed successfully.
+  ///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+  ///     Not enough system memory or address space, or other system error.
   /// @param self
   ///   The struct that owns the function pointer.
   /// @param value_out
@@ -717,6 +800,8 @@ struct ne_core_stream
   ///   - #NE_CORE_RESULT_ERROR:
   ///     If an error occurred on the stream (such as a disk error, file
   ///     deleted, socket closed, etc.), or #is_terminated returns NE_CORE_TRUE.
+  ///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+  ///     Not enough system memory or address space, or other system error.
   /// @param self
   ///   The struct that owns the function pointer.
   /// @param buffer
@@ -744,6 +829,8 @@ struct ne_core_stream
   ///   - #NE_CORE_RESULT_ERROR:
   ///     If an error occurred on the stream (such as a disk error, file
   ///     deleted, socket closed, etc.), or #is_terminated returns NE_CORE_TRUE.
+  ///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+  ///     Not enough system memory or address space, or other system error.
   /// @param self
   ///   The struct that owns the function pointer.
   /// @param buffer
@@ -814,6 +901,8 @@ struct ne_core_stream
   ///   - #NE_CORE_RESULT_ERROR:
   ///     If an error occurred on the stream (such as a disk error, file
   ///     deleted, socket closed, etc.), or #is_terminated returns NE_CORE_TRUE.
+  ///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
+  ///     Not enough system memory or address space, or other system error.
   /// @param self
   ///   The struct that owns the function pointer.
   /// @param origin

@@ -25,6 +25,11 @@ static void test_exit_callback(const ne_core_exit_event *event,
 static void full_tests(test_table *table)
 {
   TEST_CLEAR_RESULT();
+  const char *platform = ne_core_get_platform_name(table->result);
+  TEST_EXPECT(platform != nullptr && *platform != '\0');
+  TEST_EXPECT_TABLE_RESULT();
+
+  TEST_CLEAR_RESULT();
   void *allocation = ne_core_allocate(table->result, 1);
   TEST_EXPECT_TABLE_RESULT();
   TEST_EXPECT(allocation != nullptr);
@@ -66,6 +71,10 @@ static void full_tests(test_table *table)
 
 static void null_tests(test_table *table)
 {
+  TEST_CLEAR_RESULT();
+  TEST_EXPECT(ne_core_get_platform_name(table->result) == nullptr);
+  TEST_EXPECT_TABLE_RESULT();
+
   TEST_CLEAR_RESULT();
   TEST_EXPECT(ne_core_allocate(table->result, 1) == nullptr);
   TEST_EXPECT_TABLE_RESULT();

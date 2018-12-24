@@ -1,14 +1,15 @@
 /// @file
 /// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../ne_io/ne_io.h"
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 
 #if defined(NE_CORE_PLATFORM_WINDOWS)
-#define NO_WIN #@ MIN_MAX
+#define VC_EXTRALEAN
+#define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
-#include <algorithm>
 
 struct _input_opaque
 {
@@ -113,9 +114,15 @@ static uint64_t _input_read(uint64_t *result,
         WCHAR *wide_char = &record.Event.KeyEvent.uChar.UnicodeChar;
 
         uint32_t utf8_code_point = 0;
-        uint64_t multibyte_size = (uint64_t)WideCharToMultiByte(
-            CP_UTF8, 0, wide_char, 1, (char *)&utf8_code_point,
-            sizeof(utf8_code_point), 0, 0);
+        uint64_t multibyte_size =
+            (uint64_t)WideCharToMultiByte(CP_UTF8,
+                                          0,
+                                          wide_char,
+                                          1,
+                                          (char *)&utf8_code_point,
+                                          sizeof(utf8_code_point),
+                                          0,
+                                          0);
 
         // If this character would cause us to read outside the buffer, then we
         // need to only read part of the encoded character and leave the rest
@@ -135,7 +142,8 @@ static uint64_t _input_read(uint64_t *result,
         }
 
         // Copy the code-point to the output buffer.
-        std::memcpy((uint8_t *)buffer + bytes_read, &utf8_code_point,
+        std::memcpy((uint8_t *)buffer + bytes_read,
+                    &utf8_code_point,
                     (size_t)multibyte_size);
         bytes_read += multibyte_size;
       }
@@ -382,8 +390,8 @@ static uint64_t _output_write(uint64_t *result,
                               uint64_t size,
                               ne_core_bool allow_blocking)
 {
-  return _outgoing_write(result, stream, buffer, size, allow_blocking,
-                         NE_IO_OUTPUT);
+  return _outgoing_write(
+      result, stream, buffer, size, allow_blocking, NE_IO_OUTPUT);
 }
 
 /******************************************************************************/
@@ -405,8 +413,8 @@ static uint64_t _error_write(uint64_t *result,
                              uint64_t size,
                              ne_core_bool allow_blocking)
 {
-  return _outgoing_write(result, stream, buffer, size, allow_blocking,
-                         NE_IO_ERROR);
+  return _outgoing_write(
+      result, stream, buffer, size, allow_blocking, NE_IO_ERROR);
 }
 
 /******************************************************************************/
