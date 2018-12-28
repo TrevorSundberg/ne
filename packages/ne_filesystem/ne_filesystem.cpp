@@ -1,6 +1,8 @@
 /// @file
 /// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../ne_filesystem/ne_filesystem.h"
+#include "../ne_core/ne_core_platform.hpp"
+#include "../ne_core/ne_core_private.h"
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -23,11 +25,11 @@ using namespace std::experimental::filesystem; // NOLINT
 #if defined(NE_CORE_PLATFORM_WINDOWS)
 // https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file
 // https://docs.microsoft.com/en-us/dotnet/standard/io/file-path-formats
-#define VC_EXTRALEAN
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <Shlobj.h>
-#include <Windows.h>
+#  define VC_EXTRALEAN
+#  define WIN32_LEAN_AND_MEAN
+#  define NOMINMAX
+#  include <Shlobj.h>
+#  include <Windows.h>
 
 static const constexpr bool _supported = true;
 #else
@@ -161,81 +163,6 @@ universal_to_filesystem_path(const char *universal_path)
 }
 
 /******************************************************************************/
-static uint64_t _file_read(uint64_t *result,
-                           ne_core_stream *self,
-                           void *buffer,
-                           uint64_t size,
-                           ne_core_bool allow_blocking)
-{
-  (void)self;
-  (void)buffer;
-  (void)size;
-  (void)allow_blocking;
-  NE_CORE_INTERNAL_ERROR_RESULT_RETURN(0);
-}
-
-/******************************************************************************/
-static uint64_t _file_write(uint64_t *result,
-                            ne_core_stream *self,
-                            const void *buffer,
-                            uint64_t size,
-                            ne_core_bool allow_blocking)
-{
-  (void)self;
-  (void)buffer;
-  (void)size;
-  (void)allow_blocking;
-  NE_CORE_INTERNAL_ERROR_RESULT_RETURN(0);
-}
-
-/******************************************************************************/
-static void _file_flush(uint64_t *result, ne_core_stream *self)
-{
-  (void)self;
-  NE_CORE_INTERNAL_ERROR_RESULT();
-}
-
-/******************************************************************************/
-static uint64_t _file_get_position(uint64_t *result, const ne_core_stream *self)
-{
-  (void)self;
-  NE_CORE_INTERNAL_ERROR_RESULT_RETURN(0);
-}
-
-/******************************************************************************/
-static uint64_t _file_get_size(uint64_t *result, const ne_core_stream *self)
-{
-  (void)self;
-  NE_CORE_INTERNAL_ERROR_RESULT_RETURN(0);
-}
-
-/******************************************************************************/
-static void _file_seek(uint64_t *result,
-                       ne_core_stream *self,
-                       ne_core_stream_seek_origin origin,
-                       int64_t position)
-{
-  (void)self;
-  (void)origin;
-  (void)position;
-  NE_CORE_INTERNAL_ERROR_RESULT();
-}
-
-/******************************************************************************/
-static ne_core_bool _file_is_valid(uint64_t *result, const ne_core_stream *self)
-{
-  (void)self;
-  NE_CORE_INTERNAL_ERROR_RESULT_RETURN(NE_CORE_FALSE);
-}
-
-/******************************************************************************/
-static void _file_free(uint64_t *result, ne_core_stream *self)
-{
-  (void)self;
-  NE_CORE_INTERNAL_ERROR_RESULT();
-}
-
-/******************************************************************************/
 static void _ne_filesystem_open_file(uint64_t *result,
                                      const ne_filesystem_open_info *info,
                                      ne_core_stream *stream_out)
@@ -338,10 +265,6 @@ static void _ne_filesystem_open_file(uint64_t *result,
         FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING, 0);
   }
 
-  // We'll set this in the per platform handlers below.
-  // We don't want to modify anything about the stream yet.
-  uint8_t opaque[sizeof(stream_out->opaque)] = {0};
-
 #if defined(NE_CORE_PLATFORM_WINDOWS)
   HANDLE handle = CreateFileW(native_path.c_str(),
                               desired_access,
@@ -377,14 +300,11 @@ static void _ne_filesystem_open_file(uint64_t *result,
     }
   }
 
-  static_assert(sizeof(handle) <= sizeof(opaque),
-                "Handle must be able to fit inside of opaque data");
-  std::memcpy(opaque, &handle, sizeof(handle));
+  std::memset(stream_out, 0, sizeof(*stream_out));
+  _file_initialize(stream_out, handle);
 #endif
 
   // The file was opened so lets initialize the stream.
-  std::memset(stream_out, 0, sizeof(*stream_out));
-  std::memcpy(stream_out->opaque, opaque, sizeof(opaque));
   switch (info->io)
   {
   case ne_filesystem_io_read:

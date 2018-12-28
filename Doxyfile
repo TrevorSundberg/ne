@@ -891,6 +891,7 @@ EXCLUDE_SYMLINKS       = NO
 # exclude all test directories for example use the pattern */test/*
 
 EXCLUDE_PATTERNS       = */test* \
+                         *_platform.hpp \
                          *.cpp \
                          *.c
 

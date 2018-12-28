@@ -149,23 +149,41 @@ char *test_concatenate_allocate(const char *prefix, const char *postfix)
   uint64_t postfix_size = test_string_length(postfix) + 1;
   uint64_t length = prefix_size + postfix_size;
   uint8_t *memory = ne_core_allocate(nullptr, length);
-  ne_intrinsic_memory_copy(memory, prefix, prefix_size);
-  ne_intrinsic_memory_copy(memory + prefix_size, postfix, postfix_size);
+  ne_core_memory_copy(memory, prefix, prefix_size);
+  ne_core_memory_copy(memory + prefix_size, postfix, postfix_size);
   return reinterpret_cast<char *>(memory);
 }
 
-void test_stream(ne_core_stream *stream,
-                 ne_core_bool free_stream,
-                 test_table *table)
+static void test_stream_validate_position(test_table *table,
+                                          ne_core_stream *stream,
+                                          uint64_t position,
+                                          uint64_t expected_position)
 {
-  // If we're in a simulated environment, we want to check blocking operations.
-  // For completness, first check non-blocking operations.
-  // We also do NOT want to free the stream here, because we're going to
-  // continue testing it.
+  TEST_EXPECT(position == expected_position);
+
+  if (stream->get_position == nullptr)
+  {
+    return;
+  }
+
+  // Getting the position should return the same thing.
+  TEST_CLEAR_RESULT();
+  TEST_EXPECT(stream->get_position(table->result, stream) == expected_position);
+  TEST_EXPECT_TABLE_RESULT();
+}
+
+void test_stream(test_table *table,
+                 ne_core_stream *stream,
+                 ne_core_bool free_stream)
+{
+  // If we're in a simulated environment, we want to check blocking
+  // operations. For completness, first check non-blocking operations. We also
+  // do NOT want to free the stream here, because we're going to continue
+  // testing it.
   if (table->simulated_environment != NE_CORE_FALSE)
   {
     table->simulated_environment = NE_CORE_FALSE;
-    test_stream(stream, NE_CORE_FALSE, table);
+    test_stream(table, stream, NE_CORE_FALSE);
     table->simulated_environment = NE_CORE_TRUE;
   }
 
@@ -223,9 +241,9 @@ void test_stream(ne_core_stream *stream,
     if (table->simulated_environment != NE_CORE_FALSE)
     {
       TEST_EXPECT(amount1 == TEST_SIMULATED_SIZE);
-      TEST_EXPECT(ne_intrinsic_memory_compare(buffer1,
-                                              TEST_SIMULATED_STREAM,
-                                              TEST_SIMULATED_SIZE) == 0);
+      TEST_EXPECT(ne_core_memory_compare(buffer1,
+                                         TEST_SIMULATED_STREAM,
+                                         TEST_SIMULATED_SIZE) == 0);
     }
 
     // Verify that the position was advanced as far as the read said.
@@ -241,20 +259,12 @@ void test_stream(ne_core_stream *stream,
     if (stream->seek != nullptr)
     {
       TEST_CLEAR_RESULT();
-      stream->seek(table->result,
-                   stream,
-                   ne_core_stream_seek_origin_begin,
-                   static_cast<int64_t>(position));
+      uint64_t seek_position1 = stream->seek(table->result,
+                                             stream,
+                                             ne_core_stream_seek_origin_begin,
+                                             static_cast<int64_t>(position));
       TEST_EXPECT_TABLE_RESULT();
-
-      // Verify that the position is the same.
-      if (stream->get_position != nullptr)
-      {
-        TEST_CLEAR_RESULT();
-        uint64_t new_position = stream->get_position(table->result, stream);
-        TEST_EXPECT_TABLE_RESULT();
-        TEST_EXPECT(new_position == position);
-      }
+      test_stream_validate_position(table, stream, seek_position1, position);
 
       // Read again into the second buffer.
       test_random_initialize(buffer2, TEST_SIMULATED_SIZE);
@@ -265,15 +275,16 @@ void test_stream(ne_core_stream *stream,
 
       // We should have read the exact same thing.
       TEST_EXPECT(amount1 == amount2);
-      TEST_EXPECT(ne_intrinsic_memory_compare(buffer1, buffer2, amount2) == 0);
+      TEST_EXPECT(ne_core_memory_compare(buffer1, buffer2, amount2) == 0);
 
       // Go back to the beginning.
       TEST_CLEAR_RESULT();
-      stream->seek(table->result,
-                   stream,
-                   ne_core_stream_seek_origin_begin,
-                   static_cast<int64_t>(position));
+      uint64_t seek_position2 = stream->seek(table->result,
+                                             stream,
+                                             ne_core_stream_seek_origin_begin,
+                                             static_cast<int64_t>(position));
       TEST_EXPECT_TABLE_RESULT();
+      test_stream_validate_position(table, stream, seek_position2, position);
     }
   }
 
@@ -320,40 +331,36 @@ void test_stream(ne_core_stream *stream,
     if (stream->seek != nullptr)
     {
       TEST_CLEAR_RESULT();
-      stream->seek(table->result,
-                   stream,
-                   ne_core_stream_seek_origin_begin,
-                   static_cast<int64_t>(position));
+      uint64_t seek_position1 = stream->seek(table->result,
+                                             stream,
+                                             ne_core_stream_seek_origin_begin,
+                                             static_cast<int64_t>(position));
       TEST_EXPECT_TABLE_RESULT();
+      test_stream_validate_position(table, stream, seek_position1, position);
 
-      // Verify that the position is the same.
-      if (stream->get_position != nullptr)
+      if (stream->read != nullptr)
       {
+        // Read the written contents into the buffer.
+        test_random_initialize(buffer2, TEST_SIMULATED_SIZE);
         TEST_CLEAR_RESULT();
-        uint64_t new_position = stream->get_position(table->result, stream);
+        uint64_t amount2 = stream->read(
+            table->result, stream, buffer2, TEST_SIMULATED_SIZE, blocking);
         TEST_EXPECT_TABLE_RESULT();
-        TEST_EXPECT(new_position == position);
+
+        // We should have read the exact same thing.
+        TEST_EXPECT(amount1 == amount2);
+        TEST_EXPECT(ne_core_memory_compare(
+                        TEST_SIMULATED_STREAM, buffer2, amount2) == 0);
       }
-
-      // Read the written contents into the buffer.
-      test_random_initialize(buffer2, TEST_SIMULATED_SIZE);
-      TEST_CLEAR_RESULT();
-      uint64_t amount2 = stream->read(
-          table->result, stream, buffer2, TEST_SIMULATED_SIZE, blocking);
-      TEST_EXPECT_TABLE_RESULT();
-
-      // We should have read the exact same thing.
-      TEST_EXPECT(amount1 == amount2);
-      TEST_EXPECT(ne_intrinsic_memory_compare(
-                      TEST_SIMULATED_STREAM, buffer2, amount2) == 0);
 
       // Go back to the beginning.
       TEST_CLEAR_RESULT();
-      stream->seek(table->result,
-                   stream,
-                   ne_core_stream_seek_origin_begin,
-                   static_cast<int64_t>(position));
+      uint64_t seek_position2 = stream->seek(table->result,
+                                             stream,
+                                             ne_core_stream_seek_origin_begin,
+                                             static_cast<int64_t>(position));
       TEST_EXPECT_TABLE_RESULT();
+      test_stream_validate_position(table, stream, seek_position2, position);
     }
   }
 
@@ -383,121 +390,94 @@ void test_stream(ne_core_stream *stream,
   // Test seek.
   if (stream->seek != nullptr)
   {
-    // Call these for coverage. We'll test them below if we have get_position.
+    // Beginning. [0].
     TEST_CLEAR_RESULT();
-    stream->seek(table->result, stream, ne_core_stream_seek_origin_begin, 0);
+    uint64_t position_begin_0 = stream->seek(
+        table->result, stream, ne_core_stream_seek_origin_begin, 0);
     TEST_EXPECT_TABLE_RESULT();
+    test_stream_validate_position(table, stream, position_begin_0, 0);
+
+    // Beginning with positive offset. [1].
     TEST_CLEAR_RESULT();
-    stream->seek(table->result, stream, ne_core_stream_seek_origin_current, 1);
+    uint64_t position_begin_1 = stream->seek(
+        table->result, stream, ne_core_stream_seek_origin_begin, 1);
     TEST_EXPECT_TABLE_RESULT();
+    test_stream_validate_position(table, stream, position_begin_1, 1);
+
+    // Beginning with negative offset (error). [1].
     TEST_CLEAR_RESULT();
-    stream->seek(table->result, stream, ne_core_stream_seek_origin_end, 0);
+    uint64_t position_begin_n1 = stream->seek(
+        table->result, stream, ne_core_stream_seek_origin_begin, -1);
+    TEST_EXPECT_RESULT(NE_CORE_RESULT_STREAM_OUT_OF_BOUNDS);
+    TEST_EXPECT(position_begin_n1 == 0);
+    test_stream_validate_position(table, stream, 1, 1);
+
+    // Current with positive offset. [2].
+    TEST_CLEAR_RESULT();
+    uint64_t position_current_1 = stream->seek(
+        table->result, stream, ne_core_stream_seek_origin_current, 1);
     TEST_EXPECT_TABLE_RESULT();
+    test_stream_validate_position(table, stream, position_current_1, 2);
 
-    // If we have get_position, we can do a lot more to verift the streams.
-    if (stream->get_position != nullptr)
-    {
-      // Beginning.
-      TEST_CLEAR_RESULT();
-      stream->seek(table->result, stream, ne_core_stream_seek_origin_begin, 0);
-      TEST_EXPECT_TABLE_RESULT();
+    // Current with negative offset. [1].
+    TEST_CLEAR_RESULT();
+    uint64_t position_current_n1 = stream->seek(
+        table->result, stream, ne_core_stream_seek_origin_current, -1);
+    TEST_EXPECT_TABLE_RESULT();
+    test_stream_validate_position(table, stream, position_current_n1, 1);
 
-      TEST_CLEAR_RESULT();
-      uint64_t new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_TABLE_RESULT();
-      TEST_EXPECT(new_position == 0);
+    // End with a large offset. [size + 10000].
+    TEST_CLEAR_RESULT();
+    uint64_t position_end_10000 = stream->seek(
+        table->result, stream, ne_core_stream_seek_origin_end, 10000);
+    TEST_EXPECT_TABLE_RESULT();
+    TEST_EXPECT(position_end_10000 >= 10000);
+    test_stream_validate_position(
+        table, stream, position_end_10000, position_end_10000);
 
-      // Beginning with positive offset.
-      TEST_CLEAR_RESULT();
-      stream->seek(table->result, stream, ne_core_stream_seek_origin_begin, 1);
-      TEST_EXPECT_TABLE_RESULT();
-
-      TEST_CLEAR_RESULT();
-      new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_TABLE_RESULT();
-      TEST_EXPECT(new_position == 1);
-
-      // Beginning with negative offset (clamped).
-      TEST_CLEAR_RESULT();
-      stream->seek(table->result, stream, ne_core_stream_seek_origin_begin, -1);
-      TEST_EXPECT_TABLE_RESULT();
-
-      TEST_CLEAR_RESULT();
-      new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_TABLE_RESULT();
-      TEST_EXPECT(new_position == 0);
-
-      // Current with positive offset.
-      TEST_CLEAR_RESULT();
-      stream->seek(
-          table->result, stream, ne_core_stream_seek_origin_current, 1);
-      TEST_EXPECT_TABLE_RESULT();
-
-      TEST_CLEAR_RESULT();
-      new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_TABLE_RESULT();
-      TEST_EXPECT(new_position == 1);
-
-      // Current with negative offset.
-      TEST_CLEAR_RESULT();
-      stream->seek(
-          table->result, stream, ne_core_stream_seek_origin_current, -1);
-      TEST_EXPECT_TABLE_RESULT();
-
-      TEST_CLEAR_RESULT();
-      new_position = stream->get_position(table->result, stream);
-      TEST_EXPECT_TABLE_RESULT();
-      TEST_EXPECT(new_position == 0);
-
-      // We can only test the end properly if we have get_size.
-      if (stream->get_size != nullptr)
-      {
-        TEST_CLEAR_RESULT();
-        uint64_t size = stream->get_size(table->result, stream);
-        TEST_EXPECT_TABLE_RESULT();
-
-        // End.
-        TEST_CLEAR_RESULT();
+    // Verify that the end didn't change because we didn't write above.
+    // End. [size].
+    TEST_CLEAR_RESULT();
+    uint64_t position_end_0 =
         stream->seek(table->result, stream, ne_core_stream_seek_origin_end, 0);
-        TEST_EXPECT_TABLE_RESULT();
+    TEST_EXPECT_TABLE_RESULT();
+    test_stream_validate_position(
+        table, stream, position_end_0, position_end_0);
 
+    // We can only test the end properly if we have get_size.
+    if (stream->get_size != nullptr)
+    {
+      TEST_CLEAR_RESULT();
+      uint64_t size = stream->get_size(table->result, stream);
+      TEST_EXPECT_TABLE_RESULT();
+      test_stream_validate_position(table, stream, position_end_0, size);
+
+      // If size is zero the negative test would seek before the beginning.
+      if (size != 0)
+      {
+        // End with negative offset. [size - 1].
         TEST_CLEAR_RESULT();
-        new_position = stream->get_position(table->result, stream);
+        uint64_t position_end_n1 = stream->seek(
+            table->result, stream, ne_core_stream_seek_origin_end, -1);
         TEST_EXPECT_TABLE_RESULT();
-        TEST_EXPECT(new_position == size);
-
-        // End with negative offset.
-        if (size != 0)
-        {
-          TEST_CLEAR_RESULT();
-          stream->seek(
-              table->result, stream, ne_core_stream_seek_origin_end, -1);
-          TEST_EXPECT_TABLE_RESULT();
-
-          TEST_CLEAR_RESULT();
-          new_position = stream->get_position(table->result, stream);
-          TEST_EXPECT_TABLE_RESULT();
-
-          TEST_EXPECT(new_position == (size - 1));
-        }
-
-        // End with positive offset (clamped).
-        TEST_CLEAR_RESULT();
-        stream->seek(table->result, stream, ne_core_stream_seek_origin_end, 1);
-        TEST_EXPECT_TABLE_RESULT();
-
-        TEST_CLEAR_RESULT();
-        new_position = stream->get_position(table->result, stream);
-        TEST_EXPECT_TABLE_RESULT();
-        TEST_EXPECT(new_position == size);
+        test_stream_validate_position(table, stream, position_end_n1, size - 1);
       }
+
+      // End with positive offset. [size + 1].
+      TEST_CLEAR_RESULT();
+      uint64_t position_end_1 = stream->seek(
+          table->result, stream, ne_core_stream_seek_origin_end, 1);
+      TEST_EXPECT_TABLE_RESULT();
+      test_stream_validate_position(table, stream, position_end_1, size + 1);
     }
 
     // Finally, seek back to the beginning for future tests.
     // Note that this only happens if we support seek.
     TEST_CLEAR_RESULT();
-    stream->seek(table->result, stream, ne_core_stream_seek_origin_begin, 0);
+    uint64_t new_position = stream->seek(
+        table->result, stream, ne_core_stream_seek_origin_begin, 0);
     TEST_EXPECT_TABLE_RESULT();
+    test_stream_validate_position(table, stream, new_position, 0);
   }
 
   // Test free (optionally).
@@ -710,8 +690,8 @@ int32_t ne_core_main(int32_t argc, char *argv[])
   auto simulated_environment = static_cast<ne_core_bool>(
       argc >= 2 && test_string_compare(argv[1], "--simulated") == 0);
 
-  // Invalid, but until we get a way for modules to run their own initialize and
-  // register tests (dependency upon test) then  we must do this.
+  // Invalid, but until we get a way for modules to run their own initialize
+  // and register tests (dependency upon test) then  we must do this.
   extern void test_core(ne_core_bool simulated_environment);
   extern void test_io(ne_core_bool simulated_environment);
   extern void test_time(ne_core_bool simulated_environment);

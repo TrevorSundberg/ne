@@ -26,9 +26,10 @@ add_definitions(-D NE_CORE_PLATFORM_${NE_CORE_PLATFORM}=1)
 add_executable(
   ne
   packages/ne_core/ne_core.h
+  packages/ne_core/ne_core_private.h
   packages/ne_core/ne_core.cpp
-  packages/ne_core/ne_intrinsic.h
-  packages/ne_core/ne_intrinsic.cpp
+  packages/ne_core/ne_core_platform.hpp
+  packages/ne_core/ne_core_platform.cpp
   packages/ne_io/ne_io.h
   packages/ne_io/ne_io.cpp
   packages/ne_time/ne_time.h
