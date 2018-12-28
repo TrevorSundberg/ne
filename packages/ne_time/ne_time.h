@@ -10,8 +10,7 @@
 
 /// Determines if this package is fully supported on this platform.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
+///   - #ne_core_tag_routine_results.
 /// @return
 ///   #NE_CORE_TRUE if supported, #NE_CORE_FALSE otherwise.
 NE_CORE_API ne_core_bool (*ne_time_supported)(uint64_t *result);
@@ -23,10 +22,7 @@ NE_CORE_API ne_core_bool (*ne_time_supported)(uint64_t *result);
 /// nanoseconds will yeild a time period of ~584 years which limits the lifetime
 /// of this function to the year 2554.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 /// @return
 ///   The number of nanoseconds since the UNIX epoch.
 NE_CORE_API uint64_t (*ne_time_system)(uint64_t *result);
@@ -36,10 +32,7 @@ NE_CORE_API uint64_t (*ne_time_system)(uint64_t *result);
 /// value of the timer is not guaranteed, as this timer is primarily to be used
 /// for durations.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 /// @return
 ///   A number of nanoseconds.
 NE_CORE_API uint64_t (*ne_time_high_frequency_monotonic)(uint64_t *result);

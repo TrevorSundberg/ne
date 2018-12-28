@@ -15,7 +15,7 @@ static void full_tests(test_table *table)
   TEST_EXPECT(input.flush == NE_CORE_NULL);
   TEST_EXPECT(input.get_position == NE_CORE_NULL);
   TEST_EXPECT(input.get_size == NE_CORE_NULL);
-  TEST_EXPECT(input.is_terminated == NE_CORE_NULL);
+  TEST_EXPECT(input.is_valid == NE_CORE_NULL);
   TEST_EXPECT(input.seek == NE_CORE_NULL);
   TEST_EXPECT(input.free != NE_CORE_NULL);
 
@@ -32,7 +32,7 @@ static void full_tests(test_table *table)
   TEST_EXPECT(output.flush != NE_CORE_NULL);
   TEST_EXPECT(output.get_position == NE_CORE_NULL);
   TEST_EXPECT(output.get_size == NE_CORE_NULL);
-  TEST_EXPECT(output.is_terminated == NE_CORE_NULL);
+  TEST_EXPECT(output.is_valid == NE_CORE_NULL);
   TEST_EXPECT(output.seek == NE_CORE_NULL);
   TEST_EXPECT(output.free != NE_CORE_NULL);
 
@@ -49,7 +49,7 @@ static void full_tests(test_table *table)
   TEST_EXPECT(error.flush != NE_CORE_NULL);
   TEST_EXPECT(error.get_position == NE_CORE_NULL);
   TEST_EXPECT(error.get_size == NE_CORE_NULL);
-  TEST_EXPECT(error.is_terminated == NE_CORE_NULL);
+  TEST_EXPECT(error.is_valid == NE_CORE_NULL);
   TEST_EXPECT(error.seek == NE_CORE_NULL);
   TEST_EXPECT(error.free != NE_CORE_NULL);
 

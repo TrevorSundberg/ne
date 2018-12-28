@@ -113,6 +113,47 @@ int64_t test_random_compare(void *memory, uint64_t size)
   return 0;
 }
 
+ne_core_bool test_string_characters(const char *expected, const char *input)
+{
+  for (;;)
+  {
+    char c = *input;
+
+    if (c == '\0')
+    {
+      return NE_CORE_TRUE;
+    }
+
+    bool valid = false;
+    for (const char *it = expected; *it != '\0'; ++it)
+    {
+      if (c == *it)
+      {
+        valid = true;
+        break;
+      }
+    }
+
+    if (!valid)
+    {
+      return NE_CORE_FALSE;
+    }
+
+    ++input;
+  }
+}
+
+char *test_concatenate_allocate(const char *prefix, const char *postfix)
+{
+  uint64_t prefix_size = test_string_length(prefix);
+  uint64_t postfix_size = test_string_length(postfix) + 1;
+  uint64_t length = prefix_size + postfix_size;
+  uint8_t *memory = ne_core_allocate(nullptr, length);
+  ne_intrinsic_memory_copy(memory, prefix, prefix_size);
+  ne_intrinsic_memory_copy(memory + prefix_size, postfix, postfix_size);
+  return reinterpret_cast<char *>(memory);
+}
+
 void test_stream(ne_core_stream *stream,
                  ne_core_bool free_stream,
                  test_table *table)
@@ -130,22 +171,17 @@ void test_stream(ne_core_stream *stream,
 
   ne_core_bool blocking = table->simulated_environment;
 
-  // void (*seek)(uint64_t *result, ne_core_stream *stream,
-  //              ne_core_stream_seek_origin origin, uint64_t position);
-
-  // void (*free)(uint64_t *result, ne_core_stream *stream);
-
   uint8_t buffer1[TEST_SIMULATED_SIZE] = {0};
   uint8_t buffer2[TEST_SIMULATED_SIZE] = {0};
 
-  // Test is_terminated.
-  if (stream->is_terminated != nullptr)
+  // Test is_valid.
+  if (stream->is_valid != nullptr)
   {
-    // We expect the stream not to be terminated from the start.
+    // We expect the stream to be valid from the start.
     TEST_CLEAR_RESULT();
-    ne_core_bool terminated = stream->is_terminated(table->result, stream);
+    ne_core_bool valid = stream->is_valid(table->result, stream);
     TEST_EXPECT_TABLE_RESULT();
-    TEST_EXPECT(!terminated);
+    TEST_EXPECT(valid);
   }
 
   // Test get_position.
@@ -205,8 +241,10 @@ void test_stream(ne_core_stream *stream,
     if (stream->seek != nullptr)
     {
       TEST_CLEAR_RESULT();
-      stream->seek(
-          table->result, stream, ne_core_stream_seek_origin_begin, position);
+      stream->seek(table->result,
+                   stream,
+                   ne_core_stream_seek_origin_begin,
+                   static_cast<int64_t>(position));
       TEST_EXPECT_TABLE_RESULT();
 
       // Verify that the position is the same.
@@ -231,8 +269,10 @@ void test_stream(ne_core_stream *stream,
 
       // Go back to the beginning.
       TEST_CLEAR_RESULT();
-      stream->seek(
-          table->result, stream, ne_core_stream_seek_origin_begin, position);
+      stream->seek(table->result,
+                   stream,
+                   ne_core_stream_seek_origin_begin,
+                   static_cast<int64_t>(position));
       TEST_EXPECT_TABLE_RESULT();
     }
   }
@@ -280,8 +320,10 @@ void test_stream(ne_core_stream *stream,
     if (stream->seek != nullptr)
     {
       TEST_CLEAR_RESULT();
-      stream->seek(
-          table->result, stream, ne_core_stream_seek_origin_begin, position);
+      stream->seek(table->result,
+                   stream,
+                   ne_core_stream_seek_origin_begin,
+                   static_cast<int64_t>(position));
       TEST_EXPECT_TABLE_RESULT();
 
       // Verify that the position is the same.
@@ -307,8 +349,10 @@ void test_stream(ne_core_stream *stream,
 
       // Go back to the beginning.
       TEST_CLEAR_RESULT();
-      stream->seek(
-          table->result, stream, ne_core_stream_seek_origin_begin, position);
+      stream->seek(table->result,
+                   stream,
+                   ne_core_stream_seek_origin_begin,
+                   static_cast<int64_t>(position));
       TEST_EXPECT_TABLE_RESULT();
     }
   }
@@ -375,10 +419,7 @@ void test_stream(ne_core_stream *stream,
 
       // Beginning with negative offset (clamped).
       TEST_CLEAR_RESULT();
-      stream->seek(table->result,
-                   stream,
-                   ne_core_stream_seek_origin_begin,
-                   static_cast<uint64_t>(-1));
+      stream->seek(table->result, stream, ne_core_stream_seek_origin_begin, -1);
       TEST_EXPECT_TABLE_RESULT();
 
       TEST_CLEAR_RESULT();
@@ -399,10 +440,8 @@ void test_stream(ne_core_stream *stream,
 
       // Current with negative offset.
       TEST_CLEAR_RESULT();
-      stream->seek(table->result,
-                   stream,
-                   ne_core_stream_seek_origin_current,
-                   static_cast<uint64_t>(-1));
+      stream->seek(
+          table->result, stream, ne_core_stream_seek_origin_current, -1);
       TEST_EXPECT_TABLE_RESULT();
 
       TEST_CLEAR_RESULT();
@@ -431,10 +470,8 @@ void test_stream(ne_core_stream *stream,
         if (size != 0)
         {
           TEST_CLEAR_RESULT();
-          stream->seek(table->result,
-                       stream,
-                       ne_core_stream_seek_origin_end,
-                       static_cast<uint64_t>(-1));
+          stream->seek(
+              table->result, stream, ne_core_stream_seek_origin_end, -1);
           TEST_EXPECT_TABLE_RESULT();
 
           TEST_CLEAR_RESULT();

@@ -35,7 +35,7 @@ ne_core_bool (*ne_io_supported)(uint64_t *result) = &_ne_io_supported;
 
 /******************************************************************************/
 static uint64_t _input_read(uint64_t *result,
-                            ne_core_stream *stream,
+                            ne_core_stream *self,
                             void *buffer,
                             uint64_t size,
                             ne_core_bool allow_blocking)
@@ -43,7 +43,7 @@ static uint64_t _input_read(uint64_t *result,
 #if defined(NE_CORE_PLATFORM_WINDOWS)
   // See http://hackage.haskell.org/package/base-4.6.0.0/src/cbits/inputReady.c
 
-  _input_opaque *opaque = (_input_opaque *)stream->opaque;
+  _input_opaque *opaque = (_input_opaque *)self->opaque;
   HANDLE handle = GetStdHandle(STD_INPUT_HANDLE);
   DWORD type = GetFileType(handle);
 
@@ -76,9 +76,6 @@ static uint64_t _input_read(uint64_t *result,
       DWORD events_peeked = 0;
       if (!PeekConsoleInputW(handle, &record, 1, &events_peeked))
       {
-        DWORD a = 0;
-        BOOL r = ReadFile(handle, buffer, (DWORD)size, &a, nullptr);
-
         NE_CORE_RESULT(NE_CORE_RESULT_ERROR);
         return bytes_read;
       }
@@ -217,20 +214,18 @@ static uint64_t _input_read(uint64_t *result,
     }
   }
 #else
-  (void)result;
-  (void)stream;
+  (void)self;
   (void)buffer;
   (void)size;
   (void)allow_blocking;
-  NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);
-  NE_CORE_ERROR("Invalid call");
-  return 0;
+  NE_CORE_INTERNAL_ERROR_RESULT_RETURN(0);
 #endif
 }
 
 /******************************************************************************/
-static void _input_free(uint64_t *result, ne_core_stream *stream)
+static void _input_free(uint64_t *result, ne_core_stream *self)
 {
+  (void)self;
 #if defined(NE_CORE_PLATFORM_WINDOWS)
   HANDLE handle = GetStdHandle(STD_INPUT_HANDLE);
   CloseHandle(handle);
@@ -238,9 +233,7 @@ static void _input_free(uint64_t *result, ne_core_stream *stream)
   NE_CORE_ASSERT(GetStdHandle(STD_INPUT_HANDLE) == 0, "Expected null handle");
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 #else
-  (void)stream;
-  NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);
-  NE_CORE_ERROR("Invalid call");
+  NE_CORE_INTERNAL_ERROR_RESULT();
 #endif
 }
 
@@ -259,12 +252,13 @@ void (*ne_io_get_input)(uint64_t *result,
 
 /******************************************************************************/
 static uint64_t _outgoing_write(uint64_t *result,
-                                ne_core_stream *stream,
+                                ne_core_stream *self,
                                 const void *buffer,
                                 uint64_t size,
                                 ne_core_bool allow_blocking,
                                 uint64_t os_handle)
 {
+  (void)self;
 #if defined(NE_CORE_PLATFORM_WINDOWS)
   // NOTE: We NEED to handle blocking here. This won't happen for a file or
   // console, however it may happen for a COM port or a pipe (especially if the
@@ -323,23 +317,20 @@ static uint64_t _outgoing_write(uint64_t *result,
     return 0;
   }
 #else
-  (void)result;
-  (void)stream;
   (void)buffer;
   (void)size;
   (void)allow_blocking;
   (void)os_handle;
-  NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);
-  NE_CORE_ERROR("Invalid call");
-  return 0;
+  NE_CORE_INTERNAL_ERROR_RESULT_RETURN(0);
 #endif
 }
 
 /******************************************************************************/
 static void _outgoing_flush(uint64_t *result,
-                            const ne_core_stream *stream,
+                            ne_core_stream *self,
                             uint64_t os_handle)
 {
+  (void)self;
 #if defined(NE_CORE_PLATFORM_WINDOWS)
   HANDLE handle = GetStdHandle((DWORD)os_handle);
 
@@ -355,19 +346,17 @@ static void _outgoing_flush(uint64_t *result,
   else
     NE_CORE_RESULT(NE_CORE_RESULT_ERROR);
 #else
-  (void)result;
-  (void)stream;
   (void)os_handle;
-  NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);
-  NE_CORE_ERROR("Invalid call");
+  NE_CORE_INTERNAL_ERROR_RESULT();
 #endif
 }
 
 /******************************************************************************/
 static void _outgoing_free(uint64_t *result,
-                           ne_core_stream *stream,
+                           ne_core_stream *self,
                            uint64_t os_handle)
 {
+  (void)self;
 #if defined(NE_CORE_PLATFORM_WINDOWS)
   HANDLE handle = GetStdHandle((DWORD)os_handle);
   CloseHandle(handle);
@@ -375,58 +364,55 @@ static void _outgoing_free(uint64_t *result,
   NE_CORE_ASSERT(GetStdHandle((DWORD)os_handle) == 0, "Expected null handle");
   NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
 #else
-  (void)result;
-  (void)stream;
   (void)os_handle;
-  NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);
-  NE_CORE_ERROR("Invalid call");
+  NE_CORE_INTERNAL_ERROR_RESULT();
 #endif
 }
 
 /******************************************************************************/
 static uint64_t _output_write(uint64_t *result,
-                              ne_core_stream *stream,
+                              ne_core_stream *self,
                               const void *buffer,
                               uint64_t size,
                               ne_core_bool allow_blocking)
 {
   return _outgoing_write(
-      result, stream, buffer, size, allow_blocking, NE_IO_OUTPUT);
+      result, self, buffer, size, allow_blocking, NE_IO_OUTPUT);
 }
 
 /******************************************************************************/
-static void _output_flush(uint64_t *result, const ne_core_stream *stream)
+static void _output_flush(uint64_t *result, ne_core_stream *self)
 {
-  return _outgoing_flush(result, stream, NE_IO_OUTPUT);
+  return _outgoing_flush(result, self, NE_IO_OUTPUT);
 }
 
 /******************************************************************************/
-static void _output_free(uint64_t *result, ne_core_stream *stream)
+static void _output_free(uint64_t *result, ne_core_stream *self)
 {
-  return _outgoing_free(result, stream, NE_IO_OUTPUT);
+  return _outgoing_free(result, self, NE_IO_OUTPUT);
 }
 
 /******************************************************************************/
 static uint64_t _error_write(uint64_t *result,
-                             ne_core_stream *stream,
+                             ne_core_stream *self,
                              const void *buffer,
                              uint64_t size,
                              ne_core_bool allow_blocking)
 {
   return _outgoing_write(
-      result, stream, buffer, size, allow_blocking, NE_IO_ERROR);
+      result, self, buffer, size, allow_blocking, NE_IO_ERROR);
 }
 
 /******************************************************************************/
-static void _error_flush(uint64_t *result, const ne_core_stream *stream)
+static void _error_flush(uint64_t *result, ne_core_stream *self)
 {
-  return _outgoing_flush(result, stream, NE_IO_ERROR);
+  return _outgoing_flush(result, self, NE_IO_ERROR);
 }
 
 /******************************************************************************/
-static void _error_free(uint64_t *result, ne_core_stream *stream)
+static void _error_free(uint64_t *result, ne_core_stream *self)
 {
-  return _outgoing_free(result, stream, NE_IO_ERROR);
+  return _outgoing_free(result, self, NE_IO_ERROR);
 }
 
 /******************************************************************************/

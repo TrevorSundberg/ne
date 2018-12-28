@@ -10,15 +10,14 @@
 
 /// By default the user does NOT have permission to read, write, or enumerate
 /// the filesystem, except within directories returned by calling
-/// #ne_filesystem_get_directory with the following:
-/// - #ne_filesystem_directory_private.
-/// - #ne_filesystem_directory_temporary.
+/// #ne_filesystem_get_special_path with the following:
+/// - #ne_filesystem_special_path_directory_private.
+/// - #ne_filesystem_special_path_directory_temporary.
 #define NE_FILESYSTEM_PERMISSION 0x1d34f6658d725730
 
 /// Determines if this package is fully supported on this platform.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
+///   - #ne_core_tag_routine_results.
 /// @return
 ///   #NE_CORE_TRUE if supported, #NE_CORE_FALSE otherwise.
 NE_CORE_API ne_core_bool (*ne_filesystem_supported)(uint64_t *result);
@@ -38,14 +37,21 @@ NE_CORE_API ne_core_bool (*ne_filesystem_supported)(uint64_t *result);
 /// this function if possible to maximize platform independence. Do not free the
 /// returned memory.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 /// @return
 ///   The name of the scheme that the filesystem uses, or nullptr on error.
 ///   - #ne_core_tag_platform_owned.
 NE_CORE_API const char *(*ne_filesystem_get_scheme)(uint64_t *result);
+
+/// Returns NE_CORE_TRUE if the filesystem is case sensitive ('foo' and 'Foo'
+/// are different files) or NE_CORE_FALSE if it is case insensitive ('foo' and
+/// 'Foo' are the same file).
+/// @param result
+///   - #ne_core_tag_routine_results.
+/// @return
+///   NE_CORE_TRUE if case sensitive, or NE_CORE_FALSE if it is not (or if an
+///   error occurs).
+NE_CORE_API ne_core_bool (*ne_filesystem_is_case_sensitive)(uint64_t *result);
 
 /// All file system paths start with '/' and use '/' as a separator between all
 /// directories (UNIX format). This way is chosen to keep code platform
@@ -53,9 +59,12 @@ NE_CORE_API const char *(*ne_filesystem_get_scheme)(uint64_t *result);
 /// '/C:/Program Files/'. Not starting with '/' indicates that the path is
 /// relative to the working directory. Redundant '/////' will be treated as a
 /// single '/'. Paths may optionally end with '/', however all paths returned
-/// from ne_filesystem APIs will NOT include the trailing '/'. Not all
-/// characters for filenames are valid on all platforms. The following is a list
-/// of characters to avoid because they may not work on all platforms:
+/// from ne_filesystem APIs will NOT include the trailing '/'. The maximum path
+/// size and component name size is not specified as it may be specific to a
+/// filesystem, however it is advised that the user makes the path no more than
+/// 256 characters to support all platforms. Not all characters for filenames
+/// are valid on all platforms. The following is a list of characters to avoid
+/// because they may not work on all platforms:
 /// - <>:"/\|?*^
 /// - Any ASCII character from 0 to 31 (decimal).
 typedef struct ne_filesystem_tag_universal_path
@@ -73,16 +82,29 @@ typedef struct ne_filesystem_tag_os_path ne_filesystem_tag_os_path;
 /// or accessed for a number of reasons: the entry was locked by another
 /// operation, the entry is marked read only and we're doing a modifying/write
 /// operation, a directory or file of the same name exists, a disk error
-/// occurred, file or directory permissions denied the creation, etc.
+/// occurred, file or directory permissions were denied, etc. Note that if the
+/// function specifies other possible file errors above this one such as
+/// #NE_FILESYSTEM_RESULT_ACCESS_DENIED, those will occur first; this acts as a
+/// catch all in case any error occurs.
 #define NE_FILESYSTEM_RESULT_ERROR 0x3e9e5f2301e6affc
 
-/// The option #ne_filesystem_if_file_exists_error was specified and a file of
-/// the same path existed.
+/// A file existed for a given path and the operation required that none exists,
+/// such as specifying #ne_filesystem_if_file_exists_error when opening.
 #define NE_FILESYSTEM_RESULT_FILE_EXISTS_ERROR 0xafa525b9a749e711
 
-/// The option #ne_filesystem_if_none_exists_error was specified and a file did
-/// not exist under the specified path.
+/// A file did NOT exist for a given path and the operation required that a file
+/// exists, such as specifying #ne_filesystem_if_none_exists_error when opening.
 #define NE_FILESYSTEM_RESULT_NONE_EXISTS_ERROR 0x313766bcddc425e3
+
+/// Attempting to access the file was denied by the operating system, most
+/// likely due to file permissions and the application not being run by an
+/// elevated user. Note that this is unrelated to the #NE_FILESYSTEM_PERMISSION.
+#define NE_FILESYSTEM_RESULT_ACCESS_DENIED 0xc48da1aac3b85ca7
+
+/// The path or a file/directory name within the path was too long for the
+/// filesystem. Note that different filesystems and even path schemantics such
+/// as UNC paths on Windows will change the allowed length.
+#define NE_FILESYSTEM_RESULT_PATH_TOO_LONG 0xbb799e35d6d865e4
 
 /// A directory had children (files or sub-directories).
 #define NE_FILESYSTEM_RESULT_DIRECTORY_NOT_EMPTY 0xef556522991e9089
@@ -95,7 +117,7 @@ typedef enum ne_filesystem_io NE_CORE_ENUM
   ///   - \ref ne_core_stream.get_position.
   ///   - \ref ne_core_stream.get_size.
   ///   - \ref ne_core_stream.seek.
-  ///   - \ref ne_core_stream.is_terminated.
+  ///   - \ref ne_core_stream.is_valid.
   ///   - \ref ne_core_stream.free.
   ne_filesystem_io_read = 0,
 
@@ -105,7 +127,7 @@ typedef enum ne_filesystem_io NE_CORE_ENUM
   ///   - \ref ne_core_stream.get_position.
   ///   - \ref ne_core_stream.get_size.
   ///   - \ref ne_core_stream.seek.
-  ///   - \ref ne_core_stream.is_terminated.
+  ///   - \ref ne_core_stream.is_valid.
   ///   - \ref ne_core_stream.free.
   ne_filesystem_io_write = 1,
 
@@ -115,7 +137,7 @@ typedef enum ne_filesystem_io NE_CORE_ENUM
   ///   - \ref ne_core_stream.get_position.
   ///   - \ref ne_core_stream.get_size.
   ///   - \ref ne_core_stream.seek.
-  ///   - \ref ne_core_stream.is_terminated.
+  ///   - \ref ne_core_stream.is_valid.
   ///   - \ref ne_core_stream.flush.
   ///   - \ref ne_core_stream.free.
   ne_filesystem_io_read_write = 2,
@@ -126,7 +148,7 @@ typedef enum ne_filesystem_io NE_CORE_ENUM
   ///   - \ref ne_core_stream.flush.
   ///   - \ref ne_core_stream.get_position.
   ///   - \ref ne_core_stream.get_size.
-  ///   - \ref ne_core_stream.is_terminated.
+  ///   - \ref ne_core_stream.is_valid.
   ///   - \ref ne_core_stream.free.
   ne_filesystem_io_append = 3,
 
@@ -139,7 +161,7 @@ typedef enum ne_filesystem_io NE_CORE_ENUM
   ///   - \ref ne_core_stream.get_position.
   ///   - \ref ne_core_stream.get_size.
   ///   - \ref ne_core_stream.seek.
-  ///   - \ref ne_core_stream.is_terminated.
+  ///   - \ref ne_core_stream.is_valid.
   ///   - \ref ne_core_stream.flush.
   ///   - \ref ne_core_stream.free.
   ne_filesystem_io_read_append = 4,
@@ -190,6 +212,9 @@ typedef enum ne_filesystem_if_none_exists NE_CORE_ENUM
 /// controls what restrictions we lift and allow others to access the same file.
 typedef enum ne_filesystem_share_flags NE_CORE_ENUM
 {
+  /// The file is not shared for read, write, or deltion.
+  ne_filesystem_share_flags_none = 0,
+
   /// Others may simultaneously open this file if they are reading.
   ne_filesystem_share_flags_read = 1,
 
@@ -197,9 +222,9 @@ typedef enum ne_filesystem_share_flags NE_CORE_ENUM
   /// appending).
   ne_filesystem_share_flags_write = 2,
 
-  /// Others may delete this file while we have it open. This resultes in an
-  /// error for stream functions and \ref ne_core_stream.is_terminated will be
-  /// #NE_CORE_TRUE.
+  /// Others may delete this file while we have it open. This results in an
+  /// error for stream functions and \ref ne_core_stream.is_valid will be
+  /// #NE_CORE_FALSE.
   ne_filesystem_share_flags_delete = 4,
 
   /// Flag max value.
@@ -242,11 +267,11 @@ struct ne_filesystem_open_info
 };
 
 /// All files are always opened for binary (there is no text translation mode).
+/// Specifying both #ne_filesystem_if_file_exists_error and
+/// #ne_filesystem_if_none_exists_error is a degenerate case and will result in
+/// #NE_CORE_RESULT_INVALID_PARAMETER.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
 ///     The \p info.path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_FILE_EXISTS_ERROR:
@@ -301,10 +326,7 @@ typedef enum ne_filesystem_entry_type NE_CORE_ENUM
 
 /// Determine the type of an entry in the file system.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
 ///     The \p path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
@@ -338,10 +360,7 @@ typedef enum ne_filesystem_time_type NE_CORE_ENUM
 /// Retrieve a time in nanoseconds for a file entry. Note that the actual
 /// precision of the time is operating system dependent.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
 ///     The \p path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
@@ -362,10 +381,7 @@ NE_CORE_API uint64_t (*ne_filesystem_get_time)(uint64_t *result,
 /// were to call #ne_filesystem_get_time with the same path immediately after,
 /// it may not return the same as \p time.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
 ///     The \p path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
@@ -384,16 +400,11 @@ NE_CORE_API void (*ne_filesystem_set_time)(uint64_t *result,
 
 /// Reads the destination of a symbolic link. The memory returned must be freed.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
 ///     The \p path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
 ///     An error occurred or the path did not resolve to a file system entry.
-///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
-///     Not enough system memory or address space, or other system error.
 /// @param universal_path
 ///   The path to the entry in the universal format.
 ///   - #ne_filesystem_tag_universal_path.
@@ -407,10 +418,7 @@ NE_CORE_API const char *(*ne_filesystem_read_symlink)(
 
 /// Returns the size of a file in bytes.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
 ///     The \p path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
@@ -425,10 +433,7 @@ NE_CORE_API uint64_t (*ne_filesystem_file_size)(uint64_t *result,
 
 /// Removes a file or empty directory.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
 ///     The \p path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_DIRECTORY_NOT_EMPTY:
@@ -447,10 +452,7 @@ NE_CORE_API void (*ne_filesystem_delete)(uint64_t *result,
 /// conceptually thought of as rennaming if only the filename part of the path
 /// changes.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
 ///     The \p from_universal_path or \p to_universal_path required
 ///     #NE_FILESYSTEM_PERMISSION.
@@ -471,10 +473,7 @@ NE_CORE_API void (*ne_filesystem_move_rename)(uint64_t *result,
 /// directory and outputs the name of each child entry. Note that dereferncing
 /// the enumerator does NOT output paths.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_CORE_RESULT_PERMISSION_DENIED:
 ///     The \p directory_path required #NE_FILESYSTEM_PERMISSION.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
@@ -502,14 +501,9 @@ NE_CORE_API void (*ne_filesystem_enumerator)(
 /// constructs. All strings and paths are in UTF8, regardless of operating
 /// system. The memory returned must be freed.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
 ///     The path was unable to be translated.
-///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
-///     Not enough system memory or address space, or other system error.
 /// @param universal_path
 ///   The path to the entry in the universal format.
 ///   - #ne_filesystem_tag_universal_path.
@@ -531,14 +525,9 @@ NE_CORE_API char *(*ne_filesystem_translate_universal_to_os)(
 /// unsupported constructs. All strings and paths are in UTF8, regardless of
 /// operating system. The memory returned must be freed.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 ///   - #NE_FILESYSTEM_RESULT_ERROR:
 ///     The path was unable to be translated.
-///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
-///     Not enough system memory or address space, or other system error.
 /// @param os_path
 ///   The path to the entry in the operating system specific format.
 ///   - #ne_filesystem_tag_os_path.
@@ -553,65 +542,62 @@ NE_CORE_API char *(*ne_filesystem_translate_os_to_universal)(
 /// Set the current working directory. All relative paths are relative to this
 /// location.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 /// @param universal_path
 ///   The path to the entry in the universal format.
 ///   - #ne_filesystem_tag_universal_path.
 NE_CORE_API void (*ne_filesystem_set_working_directory)(
     uint64_t *result, const char *universal_path);
 
-/// Special directories we may request.
-typedef enum ne_filesystem_directory NE_CORE_ENUM
+/// Special paths we may request.
+typedef enum ne_filesystem_special_path NE_CORE_ENUM
 {
   /// A directory to read/write files that are not visible to the public or
   /// other applications. This directory is specific to machine, user, and
   /// application. #NE_FILESYSTEM_PERMISSION is NOT required to mutate files
   /// within this directory.
-  ne_filesystem_directory_private = 0,
+  ne_filesystem_special_path_directory_private = 0,
 
   /// A directory to read/write temporary or cached files to. These files may be
   /// periodically cleared by users or the operating system. It is recommended
   /// that your application clears its own files when they are not needed.
   /// #NE_FILESYSTEM_PERMISSION is NOT required to mutate files within this
   /// directory.
-  ne_filesystem_directory_temporary = 1,
+  ne_filesystem_special_path_directory_temporary = 1,
 
   /// A public directory that is visible by all applications and to the user.
-  ne_filesystem_directory_public = 2,
+  ne_filesystem_special_path_directory_public = 2,
 
   /// All relative paths are relative to this location. This directory typically
   /// is set to the executable directory, however users and other applications
   /// may set the working directory when launching your application.
-  ne_filesystem_directory_working = 3,
+  ne_filesystem_special_path_directory_working = 3,
 
-  /// Get the directory that the executable lives in. This directory should not
-  /// be written to any may be read only on many platforms.
-  ne_filesystem_directory_executable = 4,
+  /// Get the root directory. On operating systems that don't have a single
+  /// root, this will return the lowest level directory or drive that the
+  /// running system is installed on.
+  ne_filesystem_special_path_directory_root = 4,
 
   /// Enum entry count.
-  ne_filesystem_directory_max = 3,
+  ne_filesystem_special_path_max = 5,
 
   /// Force enums to be 32-bit.
-  ne_filesystem_directory_force_size = 0x7FFFFFFF
-} ne_filesystem_directory;
+  ne_filesystem_special_path_force_size = 0x7FFFFFFF
+} ne_filesystem_special_path;
 
-/// Retrieve a special directory for the current platform.
+/// Retrieve an absolute canonicalized universal path to a special file or
+/// directory. The file or directory is not guarnateed to exist and may need to
+/// be created (if permission allows). The memory returned must be freed.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
-///   - #NE_CORE_RESULT_ALLOCATION_FAILED:
-///     Not enough system memory or address space, or other system error.
-/// @param directory
-///   Which special directory is being requested.
+///   - #ne_core_tag_routine_results.
+///   - #NE_FILESYSTEM_RESULT_ERROR:
+///     An error occurred in the retrieving the path.
+/// @param special_path
+///   Which path is being requested.
 /// @return
-///   A path to the directory requested in universal format or #NE_CORE_NULL if
-///   an error occurs.
+///   A path to the file or directory in universal format or #NE_CORE_NULL if an
+///   error occurs.
 ///   - #ne_core_tag_user_owned.
 ///   - #ne_filesystem_tag_universal_path.
-NE_CORE_API const char *(*ne_filesystem_get_directory)(
-    uint64_t *result, ne_filesystem_directory directory);
+NE_CORE_API char *(*ne_filesystem_get_special_path)(
+    uint64_t *result, ne_filesystem_special_path special_path);

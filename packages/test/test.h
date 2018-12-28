@@ -68,6 +68,12 @@ void test_random_initialize(void *memory, uint64_t size);
 
 int64_t test_random_compare(void *memory, uint64_t size);
 
+/// Checks each character against each character in the expected input string.
+/// Returns true if only expected characters were encountered.
+ne_core_bool test_string_characters(const char *expected, const char *input);
+
+char *test_concatenate_allocate(const char *prefix, const char *postfix);
+
 // This will attempt to test all non-null functions inside the stream interface.
 // When 'simulated_environment' is false:
 //  - Non-blocking operations only.
