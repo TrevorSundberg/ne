@@ -109,6 +109,19 @@ const char *(*ne_core_get_platform_name)(uint64_t *result) =
     &_ne_core_get_platform_name;
 
 /******************************************************************************/
+static const char *_ne_core_get_application_guid(uint64_t *result)
+{
+  NE_CORE_UNSUPPORTED_RETURN(_supported, nullptr);
+
+  NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);
+  // TODO(Trevor.Sundberg): Make this actually depdent upon platform and
+  // application, right now it's not unique at all!
+  return "a9c4709c-14c5-4b36-ad92-0aaa342e15a6";
+}
+const char *(*ne_core_get_application_guid)(uint64_t *result) =
+    &_ne_core_get_application_guid;
+
+/******************************************************************************/
 static void _ne_core_on_exit(uint64_t *result,
                              ne_core_exit_callback callback,
                              const void *user_data)

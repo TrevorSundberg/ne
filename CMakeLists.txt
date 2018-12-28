@@ -47,5 +47,12 @@ add_executable(
   packages/test_filesystem/test_filesystem.cpp
 )
 
+# Enable extra warnings.
+if(MSVC)
+  target_compile_options(ne PRIVATE /W4)
+else()
+  target_compile_options(ne PRIVATE -Wall -Wextra -pedantic)
+endif()
+
 #target_include_directories(ne directory...)
 #target_link_libraries(ne directory...)

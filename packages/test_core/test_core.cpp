@@ -30,6 +30,13 @@ static void full_tests(test_table *table)
   TEST_EXPECT_TABLE_RESULT();
 
   TEST_CLEAR_RESULT();
+  const char *guid = ne_core_get_application_guid(table->result);
+  TEST_EXPECT(guid != nullptr && *guid != '\0');
+  TEST_EXPECT(
+      test_string_characters("abcdefghijklmnopqrstuvwxyz0123456789-", guid));
+  TEST_EXPECT_TABLE_RESULT();
+
+  TEST_CLEAR_RESULT();
   void *allocation = ne_core_allocate(table->result, 1);
   TEST_EXPECT_TABLE_RESULT();
   TEST_EXPECT(allocation != nullptr);
@@ -60,6 +67,9 @@ static void full_tests(test_table *table)
   char string_buffer[] = "cello";
   string_buffer[0] = 'h';
   TEST_EXPECT(test_string_compare("hello", string_buffer) == 0);
+
+  TEST_EXPECT(test_string_characters("abc", "babacaca") == NE_CORE_TRUE);
+  TEST_EXPECT(test_string_characters("abc", "babacafa") == NE_CORE_FALSE);
 
   uint8_t buffer1[32] = {127};
   uint8_t buffer2[32] = {0};

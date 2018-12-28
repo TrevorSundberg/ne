@@ -10,8 +10,7 @@
 
 /// Determines if this package is fully supported on this platform.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
+///   - #ne_core_tag_routine_results.
 /// @return
 ///   #NE_CORE_TRUE if supported, #NE_CORE_FALSE otherwise.
 NE_CORE_API ne_core_bool (*ne_io_supported)(uint64_t *result);
@@ -26,10 +25,7 @@ NE_CORE_API ne_core_bool (*ne_io_supported)(uint64_t *result);
 /// characters typed in the terminal will not be visible.
 ///   - #ne_core_tag_main_thread_only.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 /// @param stream_out
 ///   Outputs the created stream with the following operations:
 ///   - \ref ne_core_stream.read.
@@ -44,10 +40,7 @@ NE_CORE_API void (*ne_io_get_input)(uint64_t *result,
 /// directly as binary with no translation.
 ///   - #ne_core_tag_main_thread_only.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 /// @param stream_out
 ///   Outputs the created stream with the following operations:
 ///   - \ref ne_core_stream.write.
@@ -63,10 +56,7 @@ NE_CORE_API void (*ne_io_get_output)(uint64_t *result,
 /// desitinations will be written directly as binary with no translation.
 ///   - #ne_core_tag_main_thread_only.
 /// @param result
-///   - #NE_CORE_RESULT_SUCCESS:
-///     The operation completed successfully.
-///   - #NE_CORE_RESULT_NOT_SUPPORTED:
-///     The package is not supported.
+///   - #ne_core_tag_routine_results.
 /// @param stream_out
 ///   Outputs the created stream with the following operations:
 ///   - \ref ne_core_stream.write.

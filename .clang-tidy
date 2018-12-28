@@ -1,5 +1,6 @@
 Checks: "*,\
 -clang-diagnostic-c++98*,\
+-clang-diagnostic-covered-switch-default,\
 -clang-diagnostic-deprecated,\
 -clang-diagnostic-documentation-unknown-command,\
 -clang-diagnostic-unused-macros,\
