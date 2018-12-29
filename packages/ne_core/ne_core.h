@@ -338,7 +338,7 @@ typedef struct ne_core_tag_intrinsic ne_core_tag_intrinsic;
 ///   An array with each paramter passed in.
 /// @return
 ///   An arbitrary process return code (0 indicates success).
-extern int32_t ne_core_main(int32_t argc, char *argv[]);
+NE_CORE_API int32_t ne_core_main(int32_t argc, char *argv[]);
 
 /// The operation completed successfully. This is a routine result and be output
 /// by any ne function (see #ne_core_tag_routine_results).
