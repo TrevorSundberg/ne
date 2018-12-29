@@ -123,8 +123,7 @@ static void full_tests(test_table *table)
   const char *scheme = ne_filesystem_get_scheme(table->result);
   TEST_EXPECT(scheme != nullptr && *scheme != '\0');
   // Read the 8 bytes to help ensure it's readable memory.
-  TEST_EXPECT(ne_intrinsic_memory_compare(scheme, scheme, sizeof(uint64_t)) ==
-              0);
+  TEST_EXPECT(ne_core_memory_compare(scheme, scheme, sizeof(uint64_t)) == 0);
   // Make sure the string is a reasonable length and doesn't run off the end
   // without a null terminator.
   TEST_EXPECT(test_string_length(scheme) < static_cast<uint16_t>(-1));
@@ -182,7 +181,7 @@ static void full_tests(test_table *table)
   TEST_EXPECT_TABLE_RESULT();
 
   ne_filesystem_open_info info;
-  ne_intrinsic_memory_set(&info, NE_CORE_UNINITIALIZED_BYTE, sizeof(info));
+  ne_core_memory_set(&info, NE_CORE_UNINITIALIZED_BYTE, sizeof(info));
 
   info.universal_path = path;
   info.io = ne_filesystem_io_write;
@@ -192,23 +191,21 @@ static void full_tests(test_table *table)
   info.bypass_cache = NE_CORE_FALSE;
 
   ne_core_stream stream;
-  ne_intrinsic_memory_set(&stream, NE_CORE_UNINITIALIZED_BYTE, sizeof(stream));
+  ne_core_memory_set(&stream, NE_CORE_UNINITIALIZED_BYTE, sizeof(stream));
   TEST_CLEAR_RESULT();
   ne_filesystem_open_file(table->result, &info, &stream);
   TEST_EXPECT_TABLE_RESULT();
 
-  /*
   TEST_EXPECT(stream.read == NE_CORE_NULL);
   TEST_EXPECT(stream.write != NE_CORE_NULL);
   TEST_EXPECT(stream.flush != NE_CORE_NULL);
-  TEST_EXPECT(stream.get_position == NE_CORE_NULL);
-  TEST_EXPECT(stream.get_size == NE_CORE_NULL);
-  TEST_EXPECT(stream.is_valid == NE_CORE_NULL);
-  TEST_EXPECT(stream.seek == NE_CORE_NULL);
+  TEST_EXPECT(stream.get_position != NE_CORE_NULL);
+  TEST_EXPECT(stream.get_size != NE_CORE_NULL);
+  TEST_EXPECT(stream.seek != NE_CORE_NULL);
+  TEST_EXPECT(stream.is_valid != NE_CORE_NULL);
   TEST_EXPECT(stream.free != NE_CORE_NULL);
 
-  test_stream(&stream, NE_CORE_TRUE, table);
-  */
+  test_stream(table, &stream, NE_CORE_TRUE);
 
   TEST_CLEAR_RESULT();
   ne_core_free(table->result, path);

@@ -5,7 +5,7 @@
 static void full_tests(test_table *table)
 {
   ne_core_stream input;
-  ne_intrinsic_memory_set(&input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input));
+  ne_core_memory_set(&input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input));
   TEST_CLEAR_RESULT();
   ne_io_get_input(table->result, &input);
   TEST_EXPECT_TABLE_RESULT();
@@ -15,14 +15,14 @@ static void full_tests(test_table *table)
   TEST_EXPECT(input.flush == NE_CORE_NULL);
   TEST_EXPECT(input.get_position == NE_CORE_NULL);
   TEST_EXPECT(input.get_size == NE_CORE_NULL);
-  TEST_EXPECT(input.is_valid == NE_CORE_NULL);
   TEST_EXPECT(input.seek == NE_CORE_NULL);
+  TEST_EXPECT(input.is_valid == NE_CORE_NULL);
   TEST_EXPECT(input.free != NE_CORE_NULL);
 
-  test_stream(&input, NE_CORE_FALSE, table);
+  test_stream(table, &input, NE_CORE_FALSE);
 
   ne_core_stream output;
-  ne_intrinsic_memory_set(&output, NE_CORE_UNINITIALIZED_BYTE, sizeof(output));
+  ne_core_memory_set(&output, NE_CORE_UNINITIALIZED_BYTE, sizeof(output));
   TEST_CLEAR_RESULT();
   ne_io_get_output(table->result, &output);
   TEST_EXPECT_TABLE_RESULT();
@@ -32,14 +32,14 @@ static void full_tests(test_table *table)
   TEST_EXPECT(output.flush != NE_CORE_NULL);
   TEST_EXPECT(output.get_position == NE_CORE_NULL);
   TEST_EXPECT(output.get_size == NE_CORE_NULL);
-  TEST_EXPECT(output.is_valid == NE_CORE_NULL);
   TEST_EXPECT(output.seek == NE_CORE_NULL);
+  TEST_EXPECT(output.is_valid == NE_CORE_NULL);
   TEST_EXPECT(output.free != NE_CORE_NULL);
 
-  test_stream(&output, NE_CORE_FALSE, table);
+  test_stream(table, &output, NE_CORE_FALSE);
 
   ne_core_stream error;
-  ne_intrinsic_memory_set(&error, NE_CORE_UNINITIALIZED_BYTE, sizeof(error));
+  ne_core_memory_set(&error, NE_CORE_UNINITIALIZED_BYTE, sizeof(error));
   TEST_CLEAR_RESULT();
   ne_io_get_error(table->result, &error);
   TEST_EXPECT_TABLE_RESULT();
@@ -49,8 +49,8 @@ static void full_tests(test_table *table)
   TEST_EXPECT(error.flush != NE_CORE_NULL);
   TEST_EXPECT(error.get_position == NE_CORE_NULL);
   TEST_EXPECT(error.get_size == NE_CORE_NULL);
-  TEST_EXPECT(error.is_valid == NE_CORE_NULL);
   TEST_EXPECT(error.seek == NE_CORE_NULL);
+  TEST_EXPECT(error.is_valid == NE_CORE_NULL);
   TEST_EXPECT(error.free != NE_CORE_NULL);
 
   // TODO(Trevor.Sundberg) We can't test writing to the error stream because it
@@ -61,7 +61,7 @@ static void full_tests(test_table *table)
 static void null_tests(test_table *table)
 {
   ne_core_stream input;
-  ne_intrinsic_memory_set(&input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input));
+  ne_core_memory_set(&input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input));
   TEST_CLEAR_RESULT();
   ne_io_get_input(table->result, &input);
   TEST_EXPECT_TABLE_RESULT();
@@ -69,7 +69,7 @@ static void null_tests(test_table *table)
                   &input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input)) == 0);
 
   ne_core_stream output;
-  ne_intrinsic_memory_set(&output, NE_CORE_UNINITIALIZED_BYTE, sizeof(output));
+  ne_core_memory_set(&output, NE_CORE_UNINITIALIZED_BYTE, sizeof(output));
   TEST_CLEAR_RESULT();
   ne_io_get_output(table->result, &output);
   TEST_EXPECT_TABLE_RESULT();
@@ -77,7 +77,7 @@ static void null_tests(test_table *table)
                   &input, NE_CORE_UNINITIALIZED_BYTE, sizeof(input)) == 0);
 
   ne_core_stream error;
-  ne_intrinsic_memory_set(&error, NE_CORE_UNINITIALIZED_BYTE, sizeof(error));
+  ne_core_memory_set(&error, NE_CORE_UNINITIALIZED_BYTE, sizeof(error));
   TEST_CLEAR_RESULT();
   ne_io_get_error(table->result, &error);
   TEST_EXPECT_TABLE_RESULT();

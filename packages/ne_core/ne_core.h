@@ -4,40 +4,20 @@
 
 #if defined(__cplusplus)
 /// Enums must be 32-bit size in C++.
-#define NE_CORE_ENUM : uint32_t
+#  define NE_CORE_ENUM : uint32_t
 /// Use C name mangling.
-#define NE_CORE_C_LINKAGE "C"
+#  define NE_CORE_C_LINKAGE "C"
 /// Indicates a null pointer.
-#define NE_CORE_NULL nullptr
-
-#if defined(NE_NO_EXCEPTIONS)
-/// Defined as 'try' if we allow exceptions and are in C++.
-#define NE_CORE_TRY if (1)
-/// Defined as 'catch' if we allow exceptions and are in C++.
-#define NE_CORE_CATCH(exception) else
-#else
-/// Defined as 'try' if we allow exceptions.
-#define NE_CORE_TRY try
-/// Defined as 'catch' if we allow exceptions.
-#define NE_CORE_CATCH(exception) catch (exception)
-#endif
-
+#  define NE_CORE_NULL nullptr
 #else
 /// We can't force enum sizes, so we make an enum constant called 'force_size'
 /// that is as big as a 32-bit number.
-#define NE_CORE_ENUM
+#  define NE_CORE_ENUM
 /// We're already in C, so we use C name mangling.
-#define NE_CORE_C_LINKAGE
+#  define NE_CORE_C_LINKAGE
 /// Indicates a null pointer.
-#define NE_CORE_NULL 0
-/// Defined as 'try' if we allow exceptions and are in C++.
-#define NE_CORE_TRY if (1)
-/// Defined as 'catch' if we allow exceptions and are in C++.
-#define NE_CORE_CATCH(exception) else
+#  define NE_CORE_NULL 0
 #endif
-
-/// A byte pattern that is used for uninitialized memory.
-#define NE_CORE_UNINITIALIZED_BYTE (0xCD)
 
 /// Used to pad platform strings so that we can guarnatee they are at least 8
 /// bytes long, so that they may be reinterpreted as a uint64_t for efficient
@@ -53,37 +33,13 @@
 /// The standard define is NE_CORE_PLATFORM_NE.
 #define NE_CORE_PLATFORM_NAME_NE "NE" NE_CORE_NULL_PADDING
 
-#if defined(NE_CORE_PLATFORM_NE)
-/// Conditionally outputs code for the defined platform.
-#define NE_CORE_PLATFORM_IF_NE(code, not_code) code
-#else
-/// Conditionally outputs code for the defined platform.
-#define NE_CORE_PLATFORM_IF_NE(code, not_code) not_code
-#endif
-
 /// Standard name for the Windows platform.
 /// The standard define is NE_CORE_PLATFORM_WINDOWS.
 #define NE_CORE_PLATFORM_NAME_WINDOWS "Windows" NE_CORE_NULL_PADDING
 
-#if defined(NE_CORE_PLATFORM_WINDOWS)
-/// Conditionally outputs code for the defined platform.
-#define NE_CORE_PLATFORM_IF_WINDOWS(code, not_code) code
-#else
-/// Conditionally outputs code for the defined platform.
-#define NE_CORE_PLATFORM_IF_WINDOWS(code, not_code) not_code
-#endif
-
 /// Standard name for an unknown platform.
 /// The standard define is NE_CORE_PLATFORM_UNKNOWN.
 #define NE_CORE_PLATFORM_NAME_UNKNOWN "Unknown" NE_CORE_NULL_PADDING
-
-#if defined(NE_CORE_PLATFORM_UNKNOWN)
-/// Conditionally outputs code for the defined platform.
-#define NE_CORE_PLATFORM_IF_UNKNOWN(code, not_code) code
-#else
-/// Conditionally outputs code for the defined platform.
-#define NE_CORE_PLATFORM_IF_UNKNOWN(code, not_code) not_code
-#endif
 
 // This should always be defined by the build system, however
 // if a user grabbed the header directly and included it in their
@@ -99,9 +55,9 @@
 /// be the name of the platform. When compiling with LLVM into a portable
 /// ne-executable this will always be "NE" if you walk to the first null
 /// terminator (trimmed).
-#define NE_CORE_PLATFORM_NAME NE_CORE_PLATFORM_NAME_UNKNOWN
+#  define NE_CORE_PLATFORM_NAME NE_CORE_PLATFORM_NAME_UNKNOWN
 /// A conditional constant for detecing which platform we are on.
-#define NE_CORE_PLATFORM_UNKNOWN 1
+#  define NE_CORE_PLATFORM_UNKNOWN 1
 #endif
 
 #if defined(NE_CORE_PLATFORM_NE)
@@ -109,7 +65,7 @@
 // NE_CORE_PLATFORM_NE).
 /// Declares external linkage with a special type of linking that means
 /// an *invalid* dummy will be stubbed in if it is not found/linked.
-#define NE_CORE_API extern NE_CORE_C_LINKAGE __attribute__((section("ne")))
+#  define NE_CORE_API extern NE_CORE_C_LINKAGE __attribute__((section("ne")))
 
 // Since we're compiling through LLVM / Clang with a specified data-layout
 // then we know the exact sizes of the following types.
@@ -141,13 +97,13 @@ typedef unsigned long long uintptr_t;
 #else
 /// Declares external linkage with a special type of linking that means
 /// an *invalid* dummy will be stubbed in if it is not found/linked.
-#define NE_CORE_API extern NE_CORE_C_LINKAGE
+#  define NE_CORE_API extern NE_CORE_C_LINKAGE
 
 // If we're not compiling with NE_CORE_PLATFORM_NE defined, it means we may be
 // on any compiler and we are most likely compiling with libc. Because of this,
 // we must rely on each compilers definition of sized types.
-#if defined(__cplusplus)
-#include <cstdint>
+#  if defined(__cplusplus)
+#    include <cstdint>
 typedef std::int8_t int8_t;
 typedef std::int16_t int16_t;
 typedef std::int32_t int32_t;
@@ -160,9 +116,9 @@ typedef std::uint32_t uint32_t;
 typedef std::uint64_t uint64_t;
 typedef std::uintmax_t uintmax_t;
 typedef std::uintptr_t uintptr_t;
-#else
-#include <stdint.h>
-#endif
+#  else
+#    include <stdint.h>
+#  endif
 #endif
 
 /// A boolean value that may hold NE_CORE_TRUE or NE_CORE_FALSE. All other
@@ -181,87 +137,10 @@ typedef uint8_t ne_core_bool;
 /// Using this value allows us to validate that the result was properly set.
 #define NE_CORE_RESULT_INVALID 0
 
-// typedef uint64_t ne_core_primitive_type;
-// static const ne_core_primitive_type ne_core_primitive_type_int8 = 0;
-// static const ne_core_primitive_type ne_core_primitive_type_int16 = 1;
-// static const ne_core_primitive_type ne_core_primitive_type_int32 = 2;
-// static const ne_core_primitive_type ne_core_primitive_type_int64 = 3;
-// static const ne_core_primitive_type ne_core_primitive_type_uint8 = 4;
-// static const ne_core_primitive_type ne_core_primitive_type_uint16 = 5;
-// static const ne_core_primitive_type ne_core_primitive_type_uint32 = 6;
-// static const ne_core_primitive_type ne_core_primitive_type_uint64 = 7;
-// static const ne_core_primitive_type ne_core_primitive_type_float = 8;
-// static const ne_core_primitive_type ne_core_primitive_type_double = 9;
-// static const ne_core_primitive_type ne_core_primitive_type_pointer = 10;
-
-/// Encloses one or more statements into a single statement safely.
-#define NE_CORE_ENCLOSURE(code)                                                \
-  do                                                                           \
-  {                                                                            \
-    code                                                                       \
-  } while (NE_CORE_FALSE)
-
-#if !defined(NDEBUG)
-/// Reports an error if a condition is false. Does not abort.
-#define NE_CORE_ASSERT(condition, text)                                        \
-  NE_CORE_ENCLOSURE(                                                           \
-      if (!(condition)) ne_core_error(                                         \
-          NE_CORE_NULL, NE_CORE_RESULT_INVALID, __FILE__, __LINE__, (text));)
-#else
-/// Reports an error if a condition is false. Does not abort.
-#define NE_CORE_ASSERT(condition, text)
-#endif
-
-/// Reports an error if a condition is true. Does not abort.
-#define NE_CORE_ERROR_IF(condition, text) NE_CORE_ASSERT(!(condition), text)
-
-/// Reports an error. Does not abort.
-#define NE_CORE_ERROR(text) NE_CORE_ASSERT(0, text)
-
-/// Sets the `result` to a given code if it's available/non-null.
-#define NE_CORE_RESULT(code) NE_CORE_ENCLOSURE(if (result) *result = code;)
-
-/// Assert for an internal error.
-#define NE_CORE_INTERNAL_ERROR() NE_CORE_ERROR("Internal error")
-
-/// Assert for an internal error. Returns a value.
-#define NE_CORE_INTERNAL_ERROR_RETURN(value)                                   \
-  NE_CORE_ENCLOSURE(NE_CORE_INTERNAL_ERROR(); return value;)
-
-/// Assert for an internal error. Outputs an error result.
-#define NE_CORE_INTERNAL_ERROR_RESULT()                                        \
-  NE_CORE_ENCLOSURE(NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);             \
-                    NE_CORE_INTERNAL_ERROR(););
-
-/// Assert for an internal error. Outputs an error result. Returns a value.
-#define NE_CORE_INTERNAL_ERROR_RESULT_RETURN(value)                            \
-  NE_CORE_ENCLOSURE(NE_CORE_RESULT(NE_CORE_RESULT_INTERNAL_ERROR);             \
-                    NE_CORE_INTERNAL_ERROR_RETURN(value);)
-
-/// Returns if a library is not supported and sets the result to
-/// #NE_CORE_RESULT_NOT_SUPPORTED if the result pointer is provided.
-#define NE_CORE_UNSUPPORTED_RETURN(supported, value)                           \
-  NE_CORE_ENCLOSURE(if (!(supported)) {                                        \
-    NE_CORE_RESULT(NE_CORE_RESULT_NOT_SUPPORTED);                              \
-    return value;                                                              \
-  })
-
-/// Catches std::bad_alloc and returns an allocation failure result.
-#define NE_CORE_CATCH_ALLOCATION_RETURN(value)                                 \
-  NE_CORE_CATCH(const ::std::bad_alloc &)                                      \
-  {                                                                            \
-    NE_CORE_RESULT(NE_CORE_RESULT_ALLOCATION_FAILED);                          \
-    return value;                                                              \
-  }
-
-/// TO be used by #NE_CORE_UNSUPPORTED_RETURN or
-/// #NE_CORE_CATCH_ALLOCATION_RETURN when there is no return.
-#define NE_CORE_NONE
-
-/// Implements the supported call given a typically global boolean value.
-#define NE_CORE_SUPPORTED_IMPLEMENTATION(supported)                            \
-  NE_CORE_ENCLOSURE(NE_CORE_RESULT(NE_CORE_RESULT_SUCCESS);                    \
-                    return (supported) ? NE_CORE_TRUE : NE_CORE_FALSE;)
+/// This is how many bytes we allocate for any struct that contains opaque data
+/// (typically defined by the platform). This is akin to the private
+/// implementation pattern, except ideally without allocating.
+#define NE_CORE_OPAQUE_SIZE 16
 
 // This header is considered tentative and is a work in progress. It contains
 // the API as well as notes about how the API should work. Some of these notes
@@ -389,6 +268,9 @@ typedef uint8_t ne_core_bool;
 
 // It is illegal to call any ne_xxxx function pre-main.
 
+// Each result code and permission should be a randomly generated uint64_t to
+// avoid collisions.
+
 /// Major version of the library (bumped for breaking changes).
 #define NE_CORE_MAJOR 0
 /// Minor version of the library (bumped for added features).
@@ -441,6 +323,11 @@ typedef struct ne_core_tag_main_thread_only ne_core_tag_main_thread_only;
 /// denied package.
 typedef struct ne_core_tag_struct_results ne_core_tag_struct_results;
 
+/// Intrinsic functions are not treated as function pointers because they are
+/// expected to be implemented directly by the compiler and heavily optimized.
+/// They also do not return the typical result codes.
+typedef struct ne_core_tag_intrinsic ne_core_tag_intrinsic;
+
 /// The first call to be made in an ne application. Static initialization in
 /// llvm will occur before this call. When relying on libc, 'main' will be
 /// invoked at this time. The program will only terminate after when this call
@@ -453,11 +340,9 @@ typedef struct ne_core_tag_struct_results ne_core_tag_struct_results;
 ///   An arbitrary process return code (0 indicates success).
 extern int32_t ne_core_main(int32_t argc, char *argv[]);
 
-// Each result code should be a randomly generated uint64_t to avoid collisions.
-
 /// The operation completed successfully. This is a routine result and be output
 /// by any ne function (see #ne_core_tag_routine_results).
-#define NE_CORE_RESULT_SUCCESS 0x95221af3245a2169
+#define NE_CORE_RESULT_SUCCESS 0x0000000000000001
 
 /// The sub-api was not implemented and so the function cannot be called. This
 /// is a routine result and be output by any ne function (see
@@ -486,6 +371,14 @@ extern int32_t ne_core_main(int32_t argc, char *argv[]);
 /// An error occurred. The function documentation may have more information
 /// about why this result is returned.
 #define NE_CORE_RESULT_ERROR 0x625f2ae2c625f5dc
+
+/// An error occurred on the stream (such as a disk error, file deleted,
+/// socket closed, etc.), or #ne_core_stream.is_valid returns NE_CORE_FALSE.
+#define NE_CORE_RESULT_STREAM_ERROR 0x72c55e0140f35004
+
+/// An attempt was made to seek before the begginning of the stream (negative
+/// position) or beyond the capability of the stream.
+#define NE_CORE_RESULT_STREAM_OUT_OF_BOUNDS 0x549d2cb6d0af5065
 
 /// An attempt to call a function was denied because the application never
 /// requested permission for the sub-api, or permission was requested but
@@ -786,7 +679,7 @@ struct ne_core_enumerator
   void (*free)(uint64_t *result, ne_core_enumerator *self);
 
   /// Opaque data used by the platform / implementation.
-  uint8_t opaque[16];
+  uint8_t opaque[NE_CORE_OPAQUE_SIZE];
 };
 
 /// When seeking a stream the seek is always relative to a given origin.
@@ -815,8 +708,17 @@ typedef struct ne_core_stream ne_core_stream;
 /// functionality that is expected. Only the functions that are expected should
 /// be filled out, all others will be nulled out by the platform. If the
 /// funciton that creates the stream returns an error, the stream will be left
-/// as is. The stream structure must be passed in to each function. It is
-/// undefined behavior to pass in the wrong stream.
+/// as is. Streams may support the following operations:
+///   - #read.
+///   - #write.
+///   - #flush.
+///   - #get_position.
+///   - #get_size.
+///   - #seek.
+///   - #is_valid.
+///   - #free.
+/// The stream structure must be passed in to each function. It is undefined
+/// behavior to pass in the wrong stream.
 ///   - #ne_core_tag_struct_results.
 struct ne_core_stream
 {
@@ -827,9 +729,8 @@ struct ne_core_stream
   ///   - #ne_core_tag_nullable.
   /// @param result
   ///   - #ne_core_tag_routine_results.
-  ///   - #NE_CORE_RESULT_ERROR:
-  ///     If an error occurred on the stream (such as a disk error, file
-  ///     deleted, socket closed, etc.), or #is_valid returns NE_CORE_FALSE.
+  ///   - #NE_CORE_RESULT_STREAM_ERROR:
+  ///     An error occurred on the stream.
   /// @param self
   ///   The struct that owns the function pointer.
   /// @param buffer
@@ -853,9 +754,8 @@ struct ne_core_stream
   ///   - #ne_core_tag_nullable.
   /// @param result
   ///   - #ne_core_tag_routine_results.
-  ///   - #NE_CORE_RESULT_ERROR:
-  ///     If an error occurred on the stream (such as a disk error, file
-  ///     deleted, socket closed, etc.), or #is_valid returns NE_CORE_FALSE.
+  ///   - #NE_CORE_RESULT_STREAM_ERROR:
+  ///     An error occurred on the stream.
   /// @param self
   ///   The struct that owns the function pointer.
   /// @param buffer
@@ -877,9 +777,8 @@ struct ne_core_stream
   ///   - #ne_core_tag_nullable.
   /// @param result
   ///   - #ne_core_tag_routine_results.
-  ///   - #NE_CORE_RESULT_ERROR:
-  ///     If an error occurred on the stream (such as a disk error, file
-  ///     deleted, socket closed, etc.), or #is_valid returns NE_CORE_FALSE.
+  ///   - #NE_CORE_RESULT_STREAM_ERROR:
+  ///     An error occurred on the stream.
   /// @param self
   ///   The struct that owns the function pointer.
   void (*flush)(uint64_t *result, ne_core_stream *self);
@@ -889,9 +788,8 @@ struct ne_core_stream
   ///   - #ne_core_tag_nullable.
   /// @param result
   ///   - #ne_core_tag_routine_results.
-  ///   - #NE_CORE_RESULT_ERROR:
-  ///     If an error occurred on the stream (such as a disk error, file
-  ///     deleted, socket closed, etc.), or #is_valid returns NE_CORE_FALSE.
+  ///   - #NE_CORE_RESULT_STREAM_ERROR:
+  ///     An error occurred on the stream.
   /// @param self
   ///   The struct that owns the function pointer.
   /// @return
@@ -903,9 +801,8 @@ struct ne_core_stream
   ///   - #ne_core_tag_nullable.
   /// @param result
   ///   - #ne_core_tag_routine_results.
-  ///   - #NE_CORE_RESULT_ERROR:
-  ///     If an error occurred on the stream (such as a disk error, file
-  ///     deleted, socket closed, etc.), or #is_valid returns NE_CORE_FALSE.
+  ///   - #NE_CORE_RESULT_STREAM_ERROR:
+  ///     An error occurred on the stream.
   /// @param self
   ///   The struct that owns the function pointer.
   /// @return
@@ -913,15 +810,20 @@ struct ne_core_stream
   uint64_t (*get_size)(uint64_t *result, const ne_core_stream *self);
 
   /// Moves the position of the stream to a specified location realtive to
-  /// either the beginning, current position, or end. Seek will clamp a streams
-  /// position if it attempts to move before the beggining (0) or after the end
-  /// (#get_size).
+  /// either the beginning, current position, or end. Seeking before the
+  /// begginning of the stream will result in
+  /// #NE_CORE_RESULT_STREAM_OUT_OF_BOUNDS. Seeking after the end is explicitly
+  /// allowed. If a stream is seeked to a position well beyond the end and a
+  /// write occurs, the streams will fill the gap with 0 bytes. It may do this
+  /// by explicitly writing the bytes, or it may store metadata knows where the
+  /// holes/gaps are located (non-contiguous).
   ///   - #ne_core_tag_nullable.
   /// @param result
   ///   - #ne_core_tag_routine_results.
-  ///   - #NE_CORE_RESULT_ERROR:
-  ///     If an error occurred on the stream (such as a disk error, file
-  ///     deleted, socket closed, etc.), or #is_valid returns NE_CORE_FALSE.
+  ///   - #NE_CORE_RESULT_STREAM_ERROR:
+  ///     An error occurred on the stream.
+  ///   - #NE_CORE_RESULT_STREAM_OUT_OF_BOUNDS:
+  ///     Seek position was before the begginning or beyond capbility.
   /// @param self
   ///   The struct that owns the function pointer.
   /// @param origin
@@ -930,14 +832,17 @@ struct ne_core_stream
   /// @param position
   ///   An offset from the \p origin (or an absolute position if \p origin is
   ///   #ne_core_stream_seek_origin_begin).
-  void (*seek)(uint64_t *result,
-               ne_core_stream *self,
-               ne_core_stream_seek_origin origin,
-               int64_t position);
+  /// @return
+  ///   The absolute position in the stream that we seeked to (relative to the
+  ///   beginning). This position may have been clamped.
+  uint64_t (*seek)(uint64_t *result,
+                   ne_core_stream *self,
+                   ne_core_stream_seek_origin origin,
+                   int64_t position);
 
   /// Indicates the stream is usable. If this returns false, all other function
-  /// calls will typically result in #NE_CORE_RESULT_ERROR. It is illegal to
-  /// call this on invalid or freed streams.
+  /// calls will typically result in #NE_CORE_RESULT_STREAM_ERROR. It is illegal
+  /// to call this on invalid or freed streams.
   ///   - #ne_core_tag_nullable.
   /// @param result
   ///   - #ne_core_tag_routine_results.
@@ -957,5 +862,48 @@ struct ne_core_stream
   void (*free)(uint64_t *result, ne_core_stream *self);
 
   /// Opaque data used by the platform / implementation.
-  uint8_t opaque[16];
+  uint8_t opaque[NE_CORE_OPAQUE_SIZE];
 };
+
+// The following intrinsic functions are intended to be defined by the compiler.
+
+/// Sets a contiguous block of memory to a specified \p value, starting with the
+/// address given by \p memory and ending at \p memory + \p size (in bytes).
+///   - #ne_core_tag_intrinsic.
+/// @param memory
+///   The base address of memory that we want to set.
+/// @param value
+///   The value we want writtten to each byte.
+/// @param size
+///   Number of bytes in memory we want to set, starting from \p memory.
+NE_CORE_API void ne_core_memory_set(void *memory, uint8_t value, uint64_t size);
+
+/// Copies a contiguous block of memory from the \p source to the \p
+/// destination. The contiguous blocks from \p source and \p destination must
+/// not overlap.
+///   - #ne_core_tag_intrinsic.
+/// @param destination
+///   The address we wish to copy to.
+/// @param source
+///   The address we wish to copy from.
+/// @param size
+///   Number of bytes in memory we want to copy.
+NE_CORE_API void ne_core_memory_copy(void *destination,
+                                     const void *source,
+                                     uint64_t size);
+
+/// Compares two contiguous blocks of memory.
+///   - #ne_core_tag_intrinsic.
+/// @param a
+///   The first address whose bytes we wish to compare.
+/// @param b
+///   The second address whose bytes we wish to compare.
+/// @param size
+///   Number of bytes in memory we want to compare.
+/// @return
+///   Returns 0 if the memory is equal, less than 0 if the bytes in \p a are
+///   less than the bytes in \p b, and greater than 0 if the bytes in \p a are
+///   greater than the bytes in \p b.
+NE_CORE_API int64_t ne_core_memory_compare(const void *a,
+                                           const void *b,
+                                           uint64_t size);

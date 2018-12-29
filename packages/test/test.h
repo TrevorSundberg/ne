@@ -2,7 +2,7 @@
 /// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #pragma once
 #include "../ne_core/ne_core.h"
-#include "../ne_core/ne_intrinsic.h"
+#include "../ne_core/ne_core_private.h"
 
 #define TEST_SIMULATED_STREAM "<This is a test>"
 #define TEST_SIMULATED_SIZE (sizeof(TEST_SIMULATED_STREAM) - 1)
@@ -81,9 +81,9 @@ char *test_concatenate_allocate(const char *prefix, const char *postfix);
 // When 'simulated_environment' is true:
 //  - Non-blocking and blocking operations are performed.
 //  - A specific string TEST_SIMULATED_STREAM is expected to be read.
-void test_stream(ne_core_stream *stream,
-                 ne_core_bool free_stream,
-                 test_table *table);
+void test_stream(test_table *table,
+                 ne_core_stream *stream,
+                 ne_core_bool free_stream);
 
 void test_run(test_table *table);
 
@@ -112,8 +112,7 @@ void test_run(test_table *table);
                                   "TEST_EXPECT(" #expression ") failed\n");)
 
 #define TEST_CLEAR_RESULT()                                                    \
-  NE_CORE_ENCLOSURE(if (table->result) *table->result =                        \
-                        NE_CORE_RESULT_INVALID;);
+  NE_CORE_ENCLOSURE(if (table->result) *table->result = NE_CORE_RESULT_INVALID;)
 
 #define TEST_EXPECT_RESULT(expected_result)                                    \
   NE_CORE_ENCLOSURE(if (table->result) {                                       \
