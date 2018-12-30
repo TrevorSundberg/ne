@@ -3,6 +3,7 @@ Checks: "*,\
 -clang-diagnostic-covered-switch-default,\
 -clang-diagnostic-deprecated,\
 -clang-diagnostic-documentation-unknown-command,\
+-clang-diagnostic-padded,\
 -clang-diagnostic-unused-macros,\
 -cppcoreguidelines-no-malloc,\
 -cppcoreguidelines-owning-memory,\

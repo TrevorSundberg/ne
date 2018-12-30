@@ -3,6 +3,7 @@
 #include "../ne_core/ne_core.h"
 #include "../ne_core/ne_core_private.h"
 #include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <iomanip>
 #include <iostream>
