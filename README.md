@@ -1,5 +1,5 @@
 # ne - Native Everywhere
-[![Build Status](https://dev.azure.com/TrevorSundberg/TrevorSundberg/_apis/build/status/TrevorSundberg.ne?branchName=master&jobName=Windows&label=Windows)](https://dev.azure.com/TrevorSundberg/TrevorSundberg/_build/latest?definitionId=1?branchName=master)
+[![][linux] ![][windows] ![][mac] ![][emscripten] ![][android] ![][ios]][build]
 
 **ne** is a standard specification, rather than a specific implementation. The standard includes:
 
@@ -12,33 +12,22 @@
 
 ## Your First Application
 
-The `.ne` executable is a `.zip` archive that contains `.ll` LLVM text files, an optional `manifest.yaml` file, and any other files you wish to package with your executable.
+The `.ne` executable is a `.zip` archive that contains LLVM text (`.ll`) or bytecode (`.bc`) files, an optional `manifest.yaml` file, and any other files you wish to package with your executable.
 
-For example, copy this code into a new a `main.ll` file:
-```llvm
-declare void @ne_sandbox_hello_world()
-
-define i32 @main()
-{
-  call void @ne_sandbox_hello_world()
-  ret i32 0
-}
-```
-
-The equivalent C program would be:
+A simple hello world C program `main.c`:
 ```C
-#include "ne.h" /* extern void ne_sandbox_hello_world(void); */
+#include "ne_core/ne_core.h"
 
-int main(void)
+int32_t ne_core_main(int32_t argc, char *argv[])
 {
-  ne_sandbox_hello_world();
+  ne_core_hello_world(NULL);
   return 0;
 }
 ```
 
-Zip up the `main.ll` into `main.zip`, then rename `main.zip` file to `main.ne`. Congratulations! You have created your first ne-executable. The call to `ne_sandbox_hello_world` will print or show a *hello world* message. This function exists for newcomers and testing purposes. Note that our `.ne` executable could also be used as a library if we were to use `external` linkage for our own functions. An `.ne` file can include other `.ne` files, but note that this is considered static linking, and we prefer users to dynamically link libraries using the package manager and `manifest.yaml` files instead which is more compatible with licenses such as the LGPL.
+This sample can be compiled using `clang -I"path/to/packages" -nostdlib -emit-llvm -o main.bc -c main.c`, where `path/to/packages` is the ne [packages](packages) directory. Finally, zip up `main.bc` into `main.zip`, then rename `main.zip` file to `main.ne`. Congratulations! You have created your first ne-executable. The call to `ne_core_hello_world` will print or show a *hello world* message. This function exists for newcomers and testing purposes. Note that our `.ne` executable could also be used as a library if we were to use `external` linkage for our own functions. An `.ne` file can include other `.ne` files, but note that this is considered static linking, and we prefer users to dynamically link libraries using the package manager and `manifest.yaml` files instead which is more compatible with licenses such as the LGPL.
 
-When `main.ne` is run, the contained LLVM text files are automatically compiled into native assembly and linked against that platform's ne-API. Any function with C-linkage that starts with `ne_` may be *optionally linked* against. If a platform does not support a given `ne_` API call, then an empty function will be generated that returns the equivalent of 0, null, false, etc. This allows platforms to implement parts of the ne-API, and even extend the API without worrying about linkage problems (much like OpenGL's extensions). This is why the ne-API uses `supported` calls, such as `ne_bool ne_socket_supported(void)`. Even if `ne_socket_supported` is not implemented, it will return false due to *optional linkage*. This can be used for hosts to offer extended functionality, for example if an application runs under [Steam](https://store.steampowered.com/) it could expose the Steam API by introducing an `ne_steam_supported` function and corresponding `ne_steam_...` calls.
+When `main.ne` is run, the contained LLVM text files are automatically compiled into native assembly, linked against that platform's ne-API, and cached. Any function with C-linkage that starts with `ne_` may be *optionally linked* against. If a platform does not support a given `ne_` API call, then an empty function will be generated that returns the equivalent of 0, null, false, etc. This allows platforms to implement parts of the ne-API, and even extend the API without worrying about linkage problems (much like OpenGL's extensions). This is why the ne-API uses `supported` calls, such as `ne_bool ne_socket_supported(void)`. Even if `ne_socket_supported` is not implemented, it will return false due to *optional linkage*. This can be used for hosts to offer extended functionality, for example if an application runs under [Steam](https://store.steampowered.com/) it could expose the Steam API by introducing an `ne_steam_supported` function and corresponding `ne_steam_...` calls.
 
 To build a more complex application or library for **ne** with your favorite native languages (C / C++ / Rust / etc.), download the [latest release](releases) for your operating system. Instructions can be found [here](https://github.com/TrevorSundberg/ne/wiki) for setting up compiler tool-chains to support outputting `.ne` executables directly.
 
@@ -245,3 +234,11 @@ This project is built on the shoulders of giants. We are forever thankful to the
 * [LLVM](https://llvm.org/)
 * [Vulkan](https://www.khronos.org/vulkan/)
 * [npm](https://www.npmjs.com/)
+
+[linux]: https://dev.azure.com/TrevorSundberg/TrevorSundberg/_apis/build/status/TrevorSundberg.ne?branchName=master&jobName=Linux&label=Linux
+[windows]: https://dev.azure.com/TrevorSundberg/TrevorSundberg/_apis/build/status/TrevorSundberg.ne?branchName=master&jobName=Windows&label=Windows
+[emscripten]: https://dev.azure.com/TrevorSundberg/TrevorSundberg/_apis/build/status/TrevorSundberg.ne?branchName=master&jobName=Emscripten&label=Emscripten
+[mac]: https://dev.azure.com/TrevorSundberg/TrevorSundberg/_apis/build/status/TrevorSundberg.ne?branchName=master&jobName=Mac&label=Mac
+[android]: https://dev.azure.com/TrevorSundberg/TrevorSundberg/_apis/build/status/TrevorSundberg.ne?branchName=master&jobName=Android&label=Android
+[ios]: https://dev.azure.com/TrevorSundberg/TrevorSundberg/_apis/build/status/TrevorSundberg.ne?branchName=master&jobName=iOS&label=iOS
+[build]: https://dev.azure.com/TrevorSundberg/TrevorSundberg/_build/latest?definitionId=1?branchName=master
