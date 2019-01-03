@@ -16,7 +16,7 @@ jobs:
   - script: node build.js
     displayName: 'Build'
     failOnStderr: true
-- job: Ubuntu
+- job: Linux
   pool:
     vmImage: 'ubuntu-16.04'
   steps:
