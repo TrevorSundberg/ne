@@ -228,11 +228,31 @@ typedef enum ne_filesystem_share_flags NE_CORE_ENUM
   ne_filesystem_share_flags_delete = 4,
 
   /// Flag max value.
-  ne_filesystem_share_flags_max = 5,
+  ne_filesystem_share_flags_max = 7,
 
   /// Force enums to be 32-bit.
   ne_filesystem_share_flags_force_size = 0x7FFFFFFF
 } ne_filesystem_share_flags;
+
+/// Extra controls for the behavior of opening a file.
+typedef enum ne_filesystem_open_flags NE_CORE_ENUM
+{
+  /// No extra flags.
+  ne_filesystem_open_flags_none = 0,
+
+  /// If we want this file to always read directly from the disk or source
+  /// without going through any operating system caching mechanisms. This is
+  /// useful for when the underlying file is being modified and the most up to
+  /// date version is requested. This parameter has serious performance
+  /// ramifications.
+  ne_filesystem_open_flags_bypass_cache = 1,
+
+  /// Flag max value.
+  ne_filesystem_open_flags_max = 1,
+
+  /// Force enums to be 32-bit.
+  ne_filesystem_open_flags_force_size = 0x7FFFFFFF
+} ne_filesystem_open_flags;
 
 /// Forward declaration and alias.
 typedef struct ne_filesystem_open_info ne_filesystem_open_info;
@@ -258,12 +278,8 @@ struct ne_filesystem_open_info
   /// processes or internal calls to
   ne_filesystem_share_flags share_flags;
 
-  /// If we want this file to always read directly from the disk or source
-  /// without going through any operating system caching mechanisms. This is
-  /// useful for when the underlying file is being modified and the most up to
-  /// date version is requested. This parameter has serious performance
-  /// ramifications.
-  ne_core_bool bypass_cache;
+  /// Extra flags that control the behavior of opening.
+  ne_filesystem_open_flags open_flags;
 };
 
 /// All files are always opened for binary (there is no text translation mode).

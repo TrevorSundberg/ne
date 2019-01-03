@@ -13,7 +13,7 @@
 #if !defined(NE_CORE_PLATFORM_NE)
 struct _file_opaque
 {
-  _file_opaque(void *_handle);
+  explicit _file_opaque(void *_handle);
 
   uint8_t buffer[4];
   uint8_t start;

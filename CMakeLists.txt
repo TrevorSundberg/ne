@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 14)
 project(ne)
 
 # Convert the value inside CMAKE_SYSTEM_NAME to an all uppercase
@@ -53,6 +54,7 @@ if(MSVC)
   target_compile_options(ne PRIVATE /W4)
 else()
   target_compile_options(ne PRIVATE -Wall -Wextra -pedantic)
+  target_link_libraries(ne PRIVATE -lstdc++fs)
 endif()
 
 #target_include_directories(ne directory...)
