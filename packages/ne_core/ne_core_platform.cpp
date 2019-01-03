@@ -2,6 +2,7 @@
 /// MIT License (see LICENSE.md) Copyright (c) 2018 Trevor Sundberg
 #include "../ne_core/ne_core_platform.hpp"
 #include <cstring>
+#include <new>
 
 #if defined(NE_CORE_PLATFORM_WINDOWS)
 #  define VC_EXTRALEAN

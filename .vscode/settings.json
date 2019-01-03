@@ -53,12 +53,34 @@
     "string": "cpp",
     "string_view": "cpp",
     "xlocbuf": "cpp",
-    "xlocmes": "cpp"
+    "xlocmes": "cpp",
+    "array": "cpp",
+    "*.tcc": "cpp",
+    "cctype": "cpp",
+    "clocale": "cpp",
+    "cwctype": "cpp",
+    "deque": "cpp",
+    "fstream": "cpp",
+    "optional": "cpp",
+    "sstream": "cpp"
   },
   "files.eol": "\n",
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
   "files.insertFinalNewline": true,
   "eslint.autoFixOnSave": true,
-  "javascript.format.enable": false
+  "javascript.format.enable": false,
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/temp/build/compile_commands.json",
+  "C_Cpp.default.compilerPath": "${workspaceFolder}/temp/tools/llvm/bin/clang",
+  "C_Cpp.clang_format_path": "${workspaceFolder}/temp/tools/llvm/bin/clang-format",
+  //"clangTidy.executable": "${workspaceFolder}/temp/tools/llvm/bin/clang-tidy",
+  "C_Cpp.default.systemIncludePath": [
+    "${workspaceFolder}/temp/tools/llvm/include/c++/v1",
+  ],
+  "clangTidy.systemIncludePath": [
+    "${workspaceFolder}/temp/tools/llvm/include/c++/v1"
+  ],
+  "cmake.cmakePath": "${workspaceFolder}/temp/tools/cmake/bin/cmake",
+  "cmake.buildDirectory": "${workspaceFolder}/temp/build",
+  "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
 }

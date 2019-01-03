@@ -129,7 +129,8 @@ static void full_tests(test_table *table)
   TEST_EXPECT(test_string_length(scheme) < static_cast<uint16_t>(-1));
   TEST_EXPECT_TABLE_RESULT();
 
-  uint64_t scheme_id = *reinterpret_cast<const uint64_t *>(scheme);
+  uint64_t scheme_id = *reinterpret_cast<const uint64_t *>(
+      scheme != nullptr ? scheme : NE_FILESYSTEM_SCHEME_POSIX);
 
   // All other platforms except Windows use the same path scheme.
   if (scheme_id ==
@@ -188,7 +189,7 @@ static void full_tests(test_table *table)
   info.if_file_exists = ne_filesystem_if_file_exists_truncate;
   info.if_none_exists = ne_filesystem_if_none_exists_create;
   info.share_flags = ne_filesystem_share_flags_none;
-  info.bypass_cache = NE_CORE_FALSE;
+  info.open_flags = ne_filesystem_open_flags_none;
 
   ne_core_stream stream;
   ne_core_memory_set(&stream, NE_CORE_UNINITIALIZED_BYTE, sizeof(stream));

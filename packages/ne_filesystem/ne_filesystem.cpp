@@ -5,7 +5,12 @@
 #include "../ne_core/ne_core_private.h"
 #include <cstdio>
 #include <cstring>
-#include <filesystem>
+
+#if defined(NE_CORE_PLATFORM_WINDOWS)
+#  include <filesystem>
+#else
+#  include <experimental/filesystem>
+#endif
 
 // For older systems that only support std::experimental::filesystem.
 namespace std // NOLINT
@@ -93,8 +98,14 @@ filesystem_to_universal_path_canonical(const std::filesystem::path &path)
     {
       continue;
     }
-    if (cstr[1] == '\0' &&
-        (c == '/' || c == std::filesystem::path::preferred_separator))
+
+    bool is_single_character = cstr[1] == '\0';
+    bool is_separator =
+        is_single_character &&
+        (c == '/' || ('/' != std::filesystem::path::preferred_separator &&
+                      c == std::filesystem::path::preferred_separator));
+
+    if (is_separator)
     {
       continue;
     }
@@ -236,30 +247,24 @@ static void _ne_filesystem_open_file(uint64_t *result,
   }
 
   uint32_t share_mode = 0;
-  switch (info->share_flags)
+  if ((info->share_flags & ne_filesystem_share_flags_read) != 0)
   {
-  case ne_filesystem_share_flags_none:
-    share_mode = NE_CORE_PLATFORM_IF_WINDOWS(0, 0);
-    break;
-  case ne_filesystem_share_flags_read:
-    share_mode = NE_CORE_PLATFORM_IF_WINDOWS(FILE_SHARE_READ, 0);
-    break;
-  case ne_filesystem_share_flags_write:
-    desired_access = NE_CORE_PLATFORM_IF_WINDOWS(GENERIC_WRITE, 0);
-    break;
-  case ne_filesystem_share_flags_delete:
-    desired_access =
-        NE_CORE_PLATFORM_IF_WINDOWS(GENERIC_READ | GENERIC_WRITE, 0);
-    break;
-  case ne_filesystem_share_flags_max:
-  case ne_filesystem_share_flags_force_size:
-  default:
-    NE_CORE_RESULT(NE_CORE_RESULT_INVALID_PARAMETER);
-    return;
+    share_mode |=
+        static_cast<uint32_t>(NE_CORE_PLATFORM_IF_WINDOWS(FILE_SHARE_READ, 0));
+  }
+  if ((info->share_flags & ne_filesystem_share_flags_write) != 0)
+  {
+    share_mode |=
+        static_cast<uint32_t>(NE_CORE_PLATFORM_IF_WINDOWS(FILE_SHARE_WRITE, 0));
+  }
+  if ((info->share_flags & ne_filesystem_share_flags_delete) != 0)
+  {
+    share_mode |= static_cast<uint32_t>(
+        NE_CORE_PLATFORM_IF_WINDOWS(FILE_SHARE_DELETE, 0));
   }
 
   uint32_t attributes = NE_CORE_PLATFORM_IF_WINDOWS(FILE_ATTRIBUTE_NORMAL, 0);
-  if (info->bypass_cache != NE_CORE_FALSE)
+  if ((info->open_flags & ne_filesystem_open_flags_bypass_cache) != 0)
   {
     attributes = NE_CORE_PLATFORM_IF_WINDOWS(
         FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING, 0);
@@ -302,6 +307,11 @@ static void _ne_filesystem_open_file(uint64_t *result,
 
   std::memset(stream_out, 0, sizeof(*stream_out));
   _file_initialize(stream_out, handle);
+#else
+  std::memset(stream_out, 0, sizeof(*stream_out));
+  (void)create_disposition;
+  (void)desired_access;
+  (void)attributes;
 #endif
 
   // The file was opened so lets initialize the stream.

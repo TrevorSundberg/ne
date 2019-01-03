@@ -13,9 +13,20 @@ jobs:
   - script: npm install
     displayName: 'Npm Install'
     failOnStderr: true
-  - script: node build.js install
-    displayName: 'Dependency Install'
+  - script: node build.js
+    displayName: 'Build'
     failOnStderr: true
-  - script: node build.js build
-    displayName: 'Full build'
+- job: Ubuntu
+  pool:
+    vmImage: 'ubuntu-16.04'
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '10.x'
+    displayName: 'Install Node.js'
+  - script: npm install
+    displayName: 'Npm Install'
+    failOnStderr: true
+  - script: node build.js
+    displayName: 'Build'
     failOnStderr: true
